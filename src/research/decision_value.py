@@ -142,6 +142,11 @@ def bootstrap_weights(n_wells: int, n_boot: int = N_BOOT, seed: int = RANDOM_SEE
 SEASON_LONG = {0: "January", 1: "May (pre-monsoon)", 2: "August (monsoon)", 3: "November (post-monsoon)"}
 
 
+def chance_text(p: float) -> str:
+    """Probability for display; a calibrated forecast never claims certainty."""
+    return "over 99%" if p >= 0.995 else "under 1%" if p <= 0.005 else f"{p * 100:.0f}%"
+
+
 def advisory(well_id: str, target_idx: int, q50: float, lo80: float, hi80: float, p_e1: float, thr_e1: float,
              trigger: float) -> str:
     when = f"{SEASON_LONG[int(target_idx) % 4]} {int(target_idx) // 4}"
@@ -149,7 +154,7 @@ def advisory(well_id: str, target_idx: int, q50: float, lo80: float, hi80: float
               else "No warning: a deeper-than-usual level is not likely enough to act on.")
     return (f"Well {well_id}, forecast for {when}: water about {q50:.1f} m below ground "
             f"(80% range {lo80:.1f}–{hi80:.1f} m). Chance it is deeper than this well's usual "
-            f"level for the season ({thr_e1:.1f} m): {p_e1 * 100:.0f}%. {action}")
+            f"level for the season ({thr_e1:.1f} m): {chance_text(p_e1)}. {action}")
 
 
 # ── Main ────────────────────────────────────────────────────────────────────

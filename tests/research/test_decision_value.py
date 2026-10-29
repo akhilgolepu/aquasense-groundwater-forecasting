@@ -57,6 +57,7 @@ def test_advisory_numbers_match_the_record():
     assert nums == ["12.3", "80%", "10.9", "14.1", "13.0", "64%"]  # "80%" is the range label
     assert text.endswith("plan for a deeper-than-usual water level.")
     assert "No warning" in advisory("W1", 2023 * 4, 5.0, 4.0, 6.0, 0.1, 7.0, 0.3)
+    assert "over 99%" in advisory("W1", 2023 * 4, 12.0, 11.0, 13.0, 0.999, 7.0, 0.3)  # never "100%"
 
 
 def test_rolling_isotonic_ignores_unobserved_outcomes():

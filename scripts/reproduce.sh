@@ -25,6 +25,8 @@ done
 
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate anpr
+# Third-party pytest plugins on PYTHONPATH (e.g. ROS) must not be auto-loaded into the research tests.
+export PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 
 python -m pytest tests/research
 
