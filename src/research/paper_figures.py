@@ -3,7 +3,7 @@ Research Pipeline — Phase 6.1: Publication figures and tables.
 
 Every figure and table in the manuscript is generated here from reports/ and data/processed/, so the
 paper cannot drift from the results. Output:
-  paper/figures/fig{1..8}.pdf (+ .png previews)
+  paper/figures/fig{1..9}.pdf (+ .png previews)
   paper/tables/tab{1..5}.tex
   paper/numbers.tex          \\newcommand macros for every number quoted in the text
 
@@ -17,7 +17,14 @@ import numpy as np
 import pandas as pd
 
 from src.research.calibration import CALIBRATION_REPORTS_DIR
-from src.research.config import DATA_PROCESSED_DIR, EXTERNAL_DIR, FORCING_REPORTS_DIR, SKILL_REPORTS_DIR, TRAIN_END_YEAR
+from src.research.config import (
+    DATA_PROCESSED_DIR,
+    EXTENSIONS_REPORTS_DIR,
+    EXTERNAL_DIR,
+    FORCING_REPORTS_DIR,
+    SKILL_REPORTS_DIR,
+    TRAIN_END_YEAR,
+)
 from src.research.decision_value import DECISION_REPORTS_DIR
 from src.research.regions import REGIONS, assign_region
 
@@ -317,6 +324,41 @@ def fig8_value():
 
 # ── Tables ──────────────────────────────────────────────────────────────────
 
+# ── Figure 9: Phase 7 model extensions ──────────────────────────────────────
+
+def fig9_extensions():
+    met = pd.read_csv(EXTENSIONS_REPORTS_DIR / "metrics.csv")
+    met["ci"] = met["skill_ci"].map(json.loads)
+    rain = pd.read_csv(EXTENSIONS_REPORTS_DIR / "cfsv2_rain_skill.csv")
+    order = [("M2 + ENSO/IOD", "M2: + ENSO/IOD", AQUA), ("M2 + CFSv2 forecast", "M2 + CFSv2 forecast", ORANGE),
+             ("LSTM + forcing", "LSTM + forcing", GREY), ("Mean of M2 and Chronos-2", "Mean of M2 and Chronos-2", BLUE),
+             ("M3 + oracle rain", "M3: + oracle rain", INK)]
+    order = [o for o in order if o[0] in set(met["model"])]
+    fig, (a, b) = plt.subplots(1, 2, figsize=(FULL, 62 * MM), gridspec_kw={"width_ratios": [2.2, 1]})
+    w = 0.8 / len(order)
+    for i, (m, label, color) in enumerate(order):
+        s = met[met["model"] == m].set_index("h").reindex([1, 2, 4])
+        x = np.arange(3) + (i - (len(order) - 1) / 2) * w
+        lo = s["skill_vs_persistence"] - s["ci"].map(lambda c: c[0])
+        hi = s["ci"].map(lambda c: c[1]) - s["skill_vs_persistence"]
+        a.bar(x, s["skill_vs_persistence"], w * 0.9, color=color, label=label, yerr=[lo, hi], capsize=1.5,
+              error_kw={"elinewidth": 0.6, "ecolor": INK, "capthick": 0.6}, lw=0)
+    a.set_xticks(range(3), [H_LABEL[h] for h in (1, 2, 4)])
+    a.set_ylabel("MSE skill vs persistence")
+    a.legend(frameon=False, ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.12), fontsize=7, columnspacing=1.0)
+    panel(a, "a")
+    r = rain[rain["origin"] == "all"].set_index("h").reindex([1, 2, 4])
+    b.bar(range(3), r["spearman"], 0.55, color=ORANGE, lw=0)
+    for i, v in enumerate(r["spearman"]):
+        b.text(i, v + 0.005, f"{v:.2f}", ha="center", va="bottom", fontsize=7)
+    b.set_xticks(range(3), [H_LABEL[h] for h in (1, 2, 4)])
+    b.set_ylabel("Rank correlation, forecast vs observed rain")
+    b.set_ylim(0, max(0.3, float(r["spearman"].max()) + 0.05))
+    panel(b, "b")
+    fig.tight_layout()
+    save(fig, "fig9")
+
+
 def tex_table(path, caption, label, header, rows, colspec, note=None):
     lines = [r"\begin{table*}[t]", r"\caption{" + caption + "}", r"\label{" + label + "}", r"\centering\small",
              r"\begin{adjustbox}{max width=\textwidth}", r"\begin{tabular}{" + colspec + "}", r"\toprule",
@@ -491,12 +533,13 @@ def numbers():
 
 def run_paper_figures():
     print("=== Phase 6.1: publication figures and tables ===")
-    for fn in (fig1_study_area, fig2_forcing_checks, fig3_skill, fig4_strata, fig5_coverage, fig6_drift, fig7_reliability, fig8_value):
+    for fn in (fig1_study_area, fig2_forcing_checks, fig3_skill, fig4_strata, fig5_coverage, fig6_drift, fig7_reliability, fig8_value,
+               fig9_extensions):
         fn()
         print(f"  {fn.__name__}")
     tables()
     N = numbers()
-    print(f"Saved 8 figures, 5 tables and {len(N)} number macros to {PAPER}/")
+    print(f"Saved 9 figures, 5 tables and {len(N)} number macros to {PAPER}/")
 
 
 if __name__ == "__main__":

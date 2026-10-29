@@ -28,6 +28,10 @@ data/processed/event_probabilities.parquet
 data/processed/forcing_monthly.parquet
 data/processed/well_rain_cells.parquet
 data/processed/wris_manual_updates.parquet
+data/processed/seasonal_forecast_features.parquet
+data/processed/sequence_predictions.parquet
+data/processed/sequence_cache/
+data/processed/extension_predictions.parquet
 
 # LaTeX build files
 paper/*.aux
