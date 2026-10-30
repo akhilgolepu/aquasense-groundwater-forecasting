@@ -131,6 +131,66 @@ def _predict(net, seq, static, device):
     return np.concatenate(out)
 
 
+def fit_predict(df: pd.DataFrame, seq: np.ndarray, arm: str, is_train: np.ndarray, inner: np.ndarray,
+                is_test: np.ndarray, device: str, label: str) -> np.ndarray:
+    """Early-stops on train rows outside `inner`, refits on all train rows; mean over N_SEEDS; returns depth forecasts."""
+    y = (df["y_target"] - df["y_t"]).to_numpy()
+    y_sd = float(np.std(y[is_train]))
+    yz = (y / y_sd).astype(np.float32)
+    static = static_matrix(df, ARMS[arm], is_train)
+    val = is_train & ~inner
+    preds = []
+    for s in range(N_SEEDS):
+        seed = RANDOM_SEED + s
+        _, n_ep = _train(seq[inner], static[inner], yz[inner], (seq[val], static[val], yz[val]), None, seed, device)
+        n_ep = max(1, int(np.ceil(n_ep * is_train.sum() / inner.sum())))
+        net, _ = _train(seq[is_train], static[is_train], yz[is_train], None, n_ep, seed, device)
+        preds.append(_predict(net, seq[is_test], static[is_test], device) * y_sd)
+        print(f"{label} seed {s}: {n_ep} epochs", flush=True)
+    return df.loc[is_test, "y_t"].to_numpy() + np.mean(preds, axis=0)
+
+
+def run_sequence_robustness():
+    """
+    LSTM + forcing in the two Phase 2.7 robustness settings (train ≤ 2017 / test 2020–25; unseen 2° spatial
+    blocks, same folds as skill_robustness), so the model combinations can be checked there too.
+    Writes `sequence_robustness_predictions.parquet`; one cache file per (horizon, setting, fold).
+    """
+    import torch
+
+    from src.research.skill_robustness import BLOCK_DEG, N_FOLDS
+
+    print("=== Phase 7.2b: LSTM + forcing in the robustness settings ===")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    cache = DATA_PROCESSED_DIR / "sequence_cache"
+    cache.mkdir(exist_ok=True)
+    name, (arm, with_rain) = "LSTM + forcing", VARIANTS["LSTM + forcing"]
+    out = []
+    for h in HORIZONS:
+        df = load_dataset(h).reset_index(drop=True)
+        seq = sequence_tensor(df, with_rain)
+        year = df["target_year"].to_numpy()
+        block = (np.floor(df["latitude"] / BLOCK_DEG).astype(int).astype(str) + "_"
+                 + np.floor(df["longitude"] / BLOCK_DEG).astype(int).astype(str))
+        blocks = np.array(sorted(block.unique()))
+        fold_of = dict(zip(blocks, np.random.default_rng(RANDOM_SEED).permutation(len(blocks)) % N_FOLDS))
+        fold = block.map(fold_of).to_numpy()
+        is_train, is_test = (df["split"] == "train").to_numpy(), (df["split"] == "test").to_numpy()
+        runs = [("Split: train ≤2017, test 2020–25", 0, year <= 2017, year <= 2014, year >= 2020)]
+        runs += [("Spatial blocks (unseen regions)", k, (fold != k) & is_train,
+                  (fold != k) & is_train & (year <= INNER_FIT_END_YEAR), (fold == k) & is_test) for k in range(N_FOLDS)]
+        for setting, k, train, inner, test in runs:
+            cached = cache / f"robust_h{h}_{'split' if setting.startswith('Split') else 'block'}{k}.npy"
+            if cached.exists():
+                pred = np.load(cached)
+            else:
+                pred = fit_predict(df, seq, arm, train, inner, test, device, f"[h={h}] {setting} {k}")
+                np.save(cached, pred)
+            out.append(df.loc[test, ["well_id", "campaign_idx"]].assign(h=h, setting=setting, **{name: pred}))
+    pd.concat(out).to_parquet(DATA_PROCESSED_DIR / "sequence_robustness_predictions.parquet", index=False)
+    print("Saved sequence_robustness_predictions.parquet")
+
+
 def run_sequence_baseline():
     import os
 
@@ -149,10 +209,7 @@ def run_sequence_baseline():
         df = load_dataset(h).reset_index(drop=True)
         is_train = (df["split"] == "train").to_numpy()
         inner = is_train & (df["target_year"] <= INNER_FIT_END_YEAR).to_numpy()
-        val = is_train & ~inner
         is_test = (df["split"] == "test").to_numpy()
-        y = (df["y_target"] - df["y_t"]).to_numpy()
-        y_sd = float(np.std(y[is_train]))
         res = df.loc[is_test, ["well_id", "campaign_idx"]].copy()
         for name, (arm, with_rain) in VARIANTS.items():
             cached = cache / f"h{h}_{name.replace(' ', '_').replace('+', 'plus')}.npy"
@@ -161,17 +218,7 @@ def run_sequence_baseline():
                 print(f"[h={h}] {name}: cached")
                 continue
             seq = sequence_tensor(df, with_rain)
-            static = static_matrix(df, ARMS[arm], is_train)
-            yz = (y / y_sd).astype(np.float32)
-            preds = []
-            for s in range(N_SEEDS):
-                seed = RANDOM_SEED + s
-                _, n_ep = _train(seq[inner], static[inner], yz[inner], (seq[val], static[val], yz[val]), None, seed, device)
-                n_ep = max(1, int(np.ceil(n_ep * is_train.sum() / inner.sum())))
-                net, _ = _train(seq[is_train], static[is_train], yz[is_train], None, n_ep, seed, device)
-                preds.append(_predict(net, seq[is_test], static[is_test], device) * y_sd)
-                print(f"[h={h}] {name} seed {s}: {n_ep} epochs")
-            res[name] = df.loc[is_test, "y_t"].to_numpy() + np.mean(preds, axis=0)
+            res[name] = fit_predict(df, seq, arm, is_train, inner, is_test, device, f"[h={h}] {name}")
             np.save(cached, res[name].to_numpy())
         out.append(res.assign(h=h))
     pred = pd.concat(out)
@@ -189,4 +236,6 @@ def run_sequence_baseline():
 if __name__ == "__main__":
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", FutureWarning)
-        run_sequence_baseline()
+        import sys
+
+        run_sequence_robustness() if "--robustness" in sys.argv else run_sequence_baseline()

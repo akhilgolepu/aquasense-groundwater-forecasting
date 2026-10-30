@@ -42,6 +42,7 @@ CFS_ARM = "M2 + CFSv2 forecast"
 NB_ARM = "M2 + neighbours"
 ENS = "Mean of M2 and Chronos-2"
 ENS3 = "Mean of M2, Chronos-2 and RF"
+ENS_ALL = "Mean of M2, LSTM and Chronos-2"
 CHRONOS = "Chronos-2 + past rain"
 LSTM = ["LSTM memory", "LSTM + forcing"]
 
@@ -89,6 +90,8 @@ def extended_dataset(h: int) -> pd.DataFrame:
 def add_combinations(df: pd.DataFrame) -> pd.DataFrame:
     df[ENS] = (df["M2 + ENSO/IOD"] + df[CHRONOS]) / 2
     df[ENS3] = (df["M2 + ENSO/IOD"] + df[CHRONOS] + df["RF M2"]) / 3
+    if "LSTM + forcing" in df:
+        df[ENS_ALL] = (df["M2 + ENSO/IOD"] + df["LSTM + forcing"] + df[CHRONOS]) / 3
     return df
 
 
@@ -192,8 +195,8 @@ def robustness(h: int) -> pd.DataFrame:
     return out
 
 
-def run_model_extensions(skip_robustness: bool = False):
-    print("=== Phase 7: Model extensions ===")
+def run_main_test():
+    print("=== Phase 7: Model extensions — main test ===")
     EXT_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     base = pd.read_parquet(DATA_PROCESSED_DIR / "skill_predictions.parquet")
     ref = pd.read_parquet(DATA_PROCESSED_DIR / "reference_predictions.parquet")
@@ -205,7 +208,7 @@ def run_model_extensions(skip_robustness: bool = False):
         m, df, tuning[str(h)] = main_test(h, base, ref, seq)
         rain_skill += rain_forecast_skill(df, h)
         models = (["M0 memory", "M2 + ENSO/IOD", CFS_ARM, NB_ARM, "M3 + oracle rain", "RF M2", CHRONOS]
-                  + (LSTM if seq is not None else []) + [ENS, ENS3])
+                  + (LSTM if seq is not None else []) + [ENS, ENS3] + ([ENS_ALL] if seq is not None else []))
         mse_p = np.mean((m["persistence"] - m["y_target"]) ** 2)
         boot = cluster_bootstrap(m, models)
         for c in models:
@@ -215,15 +218,17 @@ def run_model_extensions(skip_robustness: bool = False):
                             "skill_ci": ci(1 - boot[c] / boot["persistence"])})
         pairs = [("M2 + ENSO/IOD", CFS_ARM), ("M2 + ENSO/IOD", NB_ARM), ("M2 + ENSO/IOD", ENS), ("M2 + ENSO/IOD", ENS3)]
         if seq is not None:
-            pairs += [("M0 memory", "LSTM memory"), ("M2 + ENSO/IOD", "LSTM + forcing")]
+            pairs += [("M0 memory", "LSTM memory"), ("M2 + ENSO/IOD", "LSTM + forcing"), ("M2 + ENSO/IOD", ENS_ALL),
+                      ("LSTM + forcing", ENS_ALL)]
         for a, b in pairs:
             comps.append(compare(m, a, b, h))
         gap = np.mean((m["M2 + ENSO/IOD"] - m["y_target"]) ** 2) - np.mean((m["M3 + oracle rain"] - m["y_target"]) ** 2)
-        for c in (CFS_ARM, ENS):
+        for c in (CFS_ARM, ENS) + ((ENS_ALL,) if seq is not None else ()):
             closed = np.mean((m["M2 + ENSO/IOD"] - m["y_target"]) ** 2) - np.mean((m[c] - m["y_target"]) ** 2)
             boot_rows.append({"h": h, "model": c, "share_of_oracle_gap_closed": float(closed / gap)})
         jumps += jump_attribution(m, ["persistence", "M0 memory", "M2 + ENSO/IOD", ENS], h)
-        preds.append(m[["well_id", "campaign_idx", "target_idx", CFS_ARM, NB_ARM, ENS, ENS3]].assign(h=h))
+        keep = [CFS_ARM, NB_ARM, ENS, ENS3] + ([ENS_ALL] if seq is not None else [])
+        preds.append(m[["well_id", "campaign_idx", "target_idx", *keep]].assign(h=h))
 
     pd.DataFrame(metrics).to_csv(EXT_REPORTS_DIR / "metrics.csv", index=False)
     pd.DataFrame(comps).to_csv(EXT_REPORTS_DIR / "comparisons.csv", index=False)
@@ -241,13 +246,37 @@ def run_model_extensions(skip_robustness: bool = False):
     print(pd.DataFrame(rain_skill).round(3).to_string(index=False))
     print(pd.DataFrame(boot_rows).round(3).to_string(index=False))
 
-    if skip_robustness:
-        return
+
+
+def run_robustness():
+    import os
+
+    from src.research.skill_decomposition import BASE_PARAMS
+
+    print("=== Phase 7: Model extensions — robustness ===")
+    # GW_XGB_DEVICE=cuda fits XGBoost on the GPU (54 tuning runs). Every arm compared here is refitted in this
+    # run, so comparisons stay like-for-like; the main test keeps the CPU to match the Phase 2 predictions.
+    if os.environ.get("GW_XGB_DEVICE"):
+        BASE_PARAMS["device"] = os.environ["GW_XGB_DEVICE"]
+        print(f"  XGBoost device: {BASE_PARAMS['device']}")
+    EXT_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    seq_path = DATA_PROCESSED_DIR / "sequence_robustness_predictions.parquet"  # from sequence_baseline --robustness
+    seq = pd.read_parquet(seq_path) if seq_path.exists() else None
     rows = []
     for h in HORIZONS:
-        r = robustness(h)
+        cached = DATA_PROCESSED_DIR / f"extension_robustness_h{h}.parquet"  # resumable: one file per horizon
+        if cached.exists():
+            r = pd.read_parquet(cached)
+        else:
+            r = robustness(h)
+            r.to_parquet(cached, index=False)
+        pairs = [("M2 + ENSO/IOD", CFS_ARM), ("M2 + ENSO/IOD", ENS), ("M2 + ENSO/IOD", "M3 + oracle rain")]
+        if seq is not None:
+            r = r.merge(seq[seq["h"] == h].drop(columns="h"), on=["well_id", "campaign_idx", "setting"], how="inner")
+            r[ENS_ALL] = (r["M2 + ENSO/IOD"] + r["LSTM + forcing"] + r[CHRONOS]) / 3
+            pairs += [("M2 + ENSO/IOD", "LSTM + forcing"), ("M2 + ENSO/IOD", ENS_ALL)]
         for setting, g in r.groupby("setting"):
-            for a, b in (("M2 + ENSO/IOD", CFS_ARM), ("M2 + ENSO/IOD", ENS), ("M2 + ENSO/IOD", "M3 + oracle rain")):
+            for a, b in pairs:
                 rows.append(compare(g, a, b, h, setting))
     rob = pd.DataFrame(rows)
     rob.to_csv(EXT_REPORTS_DIR / "robustness.csv", index=False)
@@ -261,4 +290,8 @@ if __name__ == "__main__":
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", FutureWarning)
-        run_model_extensions(skip_robustness="--no-robustness" in sys.argv)
+        # --main or --robustness runs one part (the robustness part does not need the LSTM); default runs both
+        if "--robustness" not in sys.argv:
+            run_main_test()
+        if "--main" not in sys.argv:
+            run_robustness()

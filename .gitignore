@@ -30,8 +30,10 @@ data/processed/well_rain_cells.parquet
 data/processed/wris_manual_updates.parquet
 data/processed/seasonal_forecast_features.parquet
 data/processed/sequence_predictions.parquet
+data/processed/sequence_robustness_predictions.parquet
 data/processed/sequence_cache/
 data/processed/extension_predictions.parquet
+data/processed/extension_robustness_h*.parquet
 
 # LaTeX build files
 paper/*.aux
@@ -67,3 +69,6 @@ report/*.out
 report/*.run.xml
 report/*.toc
 report/Chapters/*.aux
+
+# Editor LaTeX builds
+report/*.synctex.gz

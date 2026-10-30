@@ -1,0 +1,290 @@
+{
+  "1": {
+    "M2 + CFSv2 forecast": {
+      "best": {
+        "max_depth": 8,
+        "min_child_weight": 20,
+        "best_iteration": 264,
+        "val_rmse": 2.675551087047217
+      },
+      "n_trees_final": 330,
+      "trials": [
+        {
+          "max_depth": 4,
+          "min_child_weight": 5,
+          "best_iteration": 429,
+          "val_rmse": 2.6922400360966487
+        },
+        {
+          "max_depth": 4,
+          "min_child_weight": 20,
+          "best_iteration": 708,
+          "val_rmse": 2.6796655833627483
+        },
+        {
+          "max_depth": 6,
+          "min_child_weight": 5,
+          "best_iteration": 214,
+          "val_rmse": 2.694349358593202
+        },
+        {
+          "max_depth": 6,
+          "min_child_weight": 20,
+          "best_iteration": 455,
+          "val_rmse": 2.6830023751285816
+        },
+        {
+          "max_depth": 8,
+          "min_child_weight": 5,
+          "best_iteration": 195,
+          "val_rmse": 2.6856700867561574
+        },
+        {
+          "max_depth": 8,
+          "min_child_weight": 20,
+          "best_iteration": 264,
+          "val_rmse": 2.675551087047217
+        }
+      ]
+    },
+    "M2 + neighbours": {
+      "best": {
+        "max_depth": 8,
+        "min_child_weight": 20,
+        "best_iteration": 319,
+        "val_rmse": 2.663702930417984
+      },
+      "n_trees_final": 398,
+      "trials": [
+        {
+          "max_depth": 4,
+          "min_child_weight": 5,
+          "best_iteration": 658,
+          "val_rmse": 2.699268953283784
+        },
+        {
+          "max_depth": 4,
+          "min_child_weight": 20,
+          "best_iteration": 974,
+          "val_rmse": 2.6833034332029806
+        },
+        {
+          "max_depth": 6,
+          "min_child_weight": 5,
+          "best_iteration": 302,
+          "val_rmse": 2.679685953223133
+        },
+        {
+          "max_depth": 6,
+          "min_child_weight": 20,
+          "best_iteration": 515,
+          "val_rmse": 2.6796944203143647
+        },
+        {
+          "max_depth": 8,
+          "min_child_weight": 5,
+          "best_iteration": 278,
+          "val_rmse": 2.678373261139737
+        },
+        {
+          "max_depth": 8,
+          "min_child_weight": 20,
+          "best_iteration": 319,
+          "val_rmse": 2.663702930417984
+        }
+      ]
+    }
+  },
+  "2": {
+    "M2 + CFSv2 forecast": {
+      "best": {
+        "max_depth": 8,
+        "min_child_weight": 5,
+        "best_iteration": 269,
+        "val_rmse": 2.912619226612803
+      },
+      "n_trees_final": 331,
+      "trials": [
+        {
+          "max_depth": 4,
+          "min_child_weight": 5,
+          "best_iteration": 973,
+          "val_rmse": 2.9190561187502464
+        },
+        {
+          "max_depth": 4,
+          "min_child_weight": 20,
+          "best_iteration": 824,
+          "val_rmse": 2.947125427397999
+        },
+        {
+          "max_depth": 6,
+          "min_child_weight": 5,
+          "best_iteration": 364,
+          "val_rmse": 2.9305545881651924
+        },
+        {
+          "max_depth": 6,
+          "min_child_weight": 20,
+          "best_iteration": 330,
+          "val_rmse": 2.9276352733292894
+        },
+        {
+          "max_depth": 8,
+          "min_child_weight": 5,
+          "best_iteration": 269,
+          "val_rmse": 2.912619226612803
+        },
+        {
+          "max_depth": 8,
+          "min_child_weight": 20,
+          "best_iteration": 244,
+          "val_rmse": 2.92754667921777
+        }
+      ]
+    },
+    "M2 + neighbours": {
+      "best": {
+        "max_depth": 6,
+        "min_child_weight": 5,
+        "best_iteration": 362,
+        "val_rmse": 2.9128494995121135
+      },
+      "n_trees_final": 444,
+      "trials": [
+        {
+          "max_depth": 4,
+          "min_child_weight": 5,
+          "best_iteration": 692,
+          "val_rmse": 2.937863551913591
+        },
+        {
+          "max_depth": 4,
+          "min_child_weight": 20,
+          "best_iteration": 768,
+          "val_rmse": 2.9460069406932505
+        },
+        {
+          "max_depth": 6,
+          "min_child_weight": 5,
+          "best_iteration": 362,
+          "val_rmse": 2.9128494995121135
+        },
+        {
+          "max_depth": 6,
+          "min_child_weight": 20,
+          "best_iteration": 344,
+          "val_rmse": 2.924957934897114
+        },
+        {
+          "max_depth": 8,
+          "min_child_weight": 5,
+          "best_iteration": 294,
+          "val_rmse": 2.9313307619403304
+        },
+        {
+          "max_depth": 8,
+          "min_child_weight": 20,
+          "best_iteration": 242,
+          "val_rmse": 2.9322882152780756
+        }
+      ]
+    }
+  },
+  "4": {
+    "M2 + CFSv2 forecast": {
+      "best": {
+        "max_depth": 8,
+        "min_child_weight": 20,
+        "best_iteration": 133,
+        "val_rmse": 2.960125187108557
+      },
+      "n_trees_final": 163,
+      "trials": [
+        {
+          "max_depth": 4,
+          "min_child_weight": 5,
+          "best_iteration": 323,
+          "val_rmse": 2.966918401059211
+        },
+        {
+          "max_depth": 4,
+          "min_child_weight": 20,
+          "best_iteration": 134,
+          "val_rmse": 2.9739212533562474
+        },
+        {
+          "max_depth": 6,
+          "min_child_weight": 5,
+          "best_iteration": 123,
+          "val_rmse": 2.9615389847845544
+        },
+        {
+          "max_depth": 6,
+          "min_child_weight": 20,
+          "best_iteration": 95,
+          "val_rmse": 2.9619218842681354
+        },
+        {
+          "max_depth": 8,
+          "min_child_weight": 5,
+          "best_iteration": 102,
+          "val_rmse": 2.9616201341879163
+        },
+        {
+          "max_depth": 8,
+          "min_child_weight": 20,
+          "best_iteration": 133,
+          "val_rmse": 2.960125187108557
+        }
+      ]
+    },
+    "M2 + neighbours": {
+      "best": {
+        "max_depth": 6,
+        "min_child_weight": 5,
+        "best_iteration": 100,
+        "val_rmse": 2.9590318120274874
+      },
+      "n_trees_final": 123,
+      "trials": [
+        {
+          "max_depth": 4,
+          "min_child_weight": 5,
+          "best_iteration": 169,
+          "val_rmse": 2.9692980290589093
+        },
+        {
+          "max_depth": 4,
+          "min_child_weight": 20,
+          "best_iteration": 244,
+          "val_rmse": 2.9676949360039173
+        },
+        {
+          "max_depth": 6,
+          "min_child_weight": 5,
+          "best_iteration": 100,
+          "val_rmse": 2.9590318120274874
+        },
+        {
+          "max_depth": 6,
+          "min_child_weight": 20,
+          "best_iteration": 163,
+          "val_rmse": 2.9590787848154108
+        },
+        {
+          "max_depth": 8,
+          "min_child_weight": 5,
+          "best_iteration": 100,
+          "val_rmse": 2.9720872871354014
+        },
+        {
+          "max_depth": 8,
+          "min_child_weight": 20,
+          "best_iteration": 62,
+          "val_rmse": 2.962882438707024
+        }
+      ]
+    }
+  }
+}

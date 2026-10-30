@@ -6,6 +6,8 @@
 #                                                #   robustness and figures (Phase 2, ~45 min, GPU for Chronos-2)
 #   … --phase3                                   # also uncertainty calibration and figures (Phase 3, needs Phase 2)
 #   … --phase4                                   # also decision value and figures (Phase 4, needs Phases 2–3)
+#   … --phase7                                   # also the model extensions: CFSv2 forecasts, LSTM, combination
+#                                                #   (Phase 7, needs Phase 2; GPU recommended, ~1 h)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -13,12 +15,14 @@ FORCING=0
 PHASE2=0
 PHASE3=0
 PHASE4=0
+PHASE7=0
 for arg in "$@"; do
   case "$arg" in
     --forcing) FORCING=1 ;;
     --phase2) PHASE2=1 ;;
     --phase3) PHASE3=1 ;;
     --phase4) PHASE4=1 ;;
+    --phase7) PHASE7=1 ;;
     *) echo "unknown option: $arg" >&2; exit 2 ;;
   esac
 done
@@ -86,6 +90,22 @@ r = v[(v["probability"] == "rolling isotonic") & (v["arm"] == "M2 + ENSO/IOD") &
       & (v["h"] == 1) & (v["alpha"] == 0.3)].iloc[0]
 print(f"Check: value of E1 warnings at 3 months, C/L = 0.3 = {r['value']:.3f} (Phase 4 reference 0.369)")
 assert abs(r["value"] - 0.369) < 0.002, "Phase 4 result changed — investigate before continuing"
+PY
+fi
+
+if [[ $PHASE7 == 1 ]]; then
+  python -m src.research.seasonal_forecast
+  python -m src.research.sequence_baseline
+  python -m src.research.sequence_baseline --robustness
+  python -m src.research.model_extensions --main
+  GW_XGB_DEVICE=cuda python -m src.research.model_extensions --robustness
+  python -m src.research.paper_figures
+  python - <<'PY'
+import pandas as pd
+m = pd.read_csv("reports/extensions/metrics.csv").set_index(["h", "model"])
+skill = m.loc[(2, "Mean of M2, LSTM and Chronos-2"), "skill_vs_persistence"]
+print(f"Check: combination skill vs persistence at 6 months = {skill:.3f} (Phase 7 reference 0.599)")
+assert abs(skill - 0.599) < 0.005, "Phase 7 result changed — investigate before continuing"
 PY
 fi
 

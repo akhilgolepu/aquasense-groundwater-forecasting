@@ -331,7 +331,8 @@ def fig9_extensions():
     met["ci"] = met["skill_ci"].map(json.loads)
     rain = pd.read_csv(EXTENSIONS_REPORTS_DIR / "cfsv2_rain_skill.csv")
     order = [("M2 + ENSO/IOD", "M2: + ENSO/IOD", AQUA), ("M2 + CFSv2 forecast", "M2 + CFSv2 forecast", ORANGE),
-             ("LSTM + forcing", "LSTM + forcing", GREY), ("Mean of M2 and Chronos-2", "Mean of M2 and Chronos-2", BLUE),
+             ("LSTM + forcing", "LSTM + forcing", GREY),
+             ("Mean of M2, LSTM and Chronos-2", "Mean of M2, LSTM and Chronos-2", BLUE),
              ("M3 + oracle rain", "M3: + oracle rain", INK)]
     order = [o for o in order if o[0] in set(met["model"])]
     fig, (a, b) = plt.subplots(1, 2, figsize=(FULL, 62 * MM), gridspec_kw={"width_ratios": [2.2, 1]})
@@ -351,8 +352,9 @@ def fig9_extensions():
     b.bar(range(3), r["spearman"], 0.55, color=ORANGE, lw=0)
     for i, v in enumerate(r["spearman"]):
         b.text(i, v + 0.005, f"{v:.2f}", ha="center", va="bottom", fontsize=7)
-    b.set_xticks(range(3), [H_LABEL[h] for h in (1, 2, 4)])
-    b.set_ylabel("Rank correlation, forecast vs observed rain")
+    b.set_xticks(range(3), ["3", "6", "12"])
+    b.set_xlabel("Forecast window (months)")
+    b.set_ylabel("Spearman ρ with observed rain")
     b.set_ylim(0, max(0.3, float(r["spearman"].max()) + 0.05))
     panel(b, "b")
     fig.tight_layout()
