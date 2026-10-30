@@ -72,3 +72,11 @@ report/Chapters/*.aux
 
 # Editor LaTeX builds
 report/*.synctex.gz
+
+# B.Tech report: contains student names and roll numbers, kept out of the public repository
+report/
+
+# Leakage-audit intermediates (rebuild with python -m src.research.leakage_audit cal)
+data/processed/audit_cal_base.parquet
+data/processed/audit_cal_predictions.parquet
+data/processed/sequence_cal_predictions.parquet
