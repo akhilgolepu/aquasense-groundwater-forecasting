@@ -17,7 +17,7 @@ from src.research.calibration import CALIBRATION_REPORTS_DIR, POINT_ARM
 from src.research.config import DATA_PROCESSED_DIR, FORCING_REPORTS_DIR, TRAIN_END_YEAR
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt
 
 MONTHS = {1: "3 months", 2: "6 months", 4: "12 months"}
 DEPTHS = ["< 5 m", "5–15 m", "15–40 m", "≥ 40 m"]

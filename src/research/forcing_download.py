@@ -45,7 +45,7 @@ def download_imd(var_type: str, first_year: int, last_year: int) -> dict:
         try:
             imdlib.get_data(var_type, year, year, fn_format="yearwise", file_dir=str(IMD_DIR), sub_dir=True)
             status[year] = "ok" if imd_file(var_type, year) else "missing after download"
-        except Exception as exc:  # IMD server returns HTML or 404 for unpublished years
+        except Exception as exc:  # noqa: BLE001 — IMD server returns HTML or 404 for unpublished years
             status[year] = f"failed: {type(exc).__name__}: {exc}"[:200]
     return status
 

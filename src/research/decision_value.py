@@ -33,7 +33,13 @@ from sklearn.metrics import roc_auc_score
 
 from src.research.benchmark import DEPTH_CLASS_NAMES
 from src.research.calibration import hierarchical_pools, lookup
-from src.research.config import CAL_END_YEAR, DATA_PROCESSED_DIR, HORIZONS, RANDOM_SEED, SKILL_REPORTS_DIR
+from src.research.config import (
+    CAL_END_YEAR,
+    DATA_PROCESSED_DIR,
+    HORIZONS,
+    RANDOM_SEED,
+    SKILL_REPORTS_DIR,
+)
 from src.research.states import station_states
 
 DECISION_REPORTS_DIR = SKILL_REPORTS_DIR.parent / "decision"
@@ -355,11 +361,11 @@ def case_study(ev: pd.DataFrame, trigger: float = 0.3) -> pd.DataFrame:
     for year, targets in WATER_YEARS.items():
         g = ev[ev["target_idx"].isin(targets) & (ev["event_id"] == "E1")]
         for (h, arm), ga in g.groupby(["h", "arm"]):
-            for label, gs in [("Atal Bhujal states", ga[ga["atal_bhujal_state"] == True]),  # noqa: E712
-                              ("Other states", ga[ga["atal_bhujal_state"] == False])]:  # noqa: E712
+            for label, gs in [("Atal Bhujal states", ga[ga["atal_bhujal_state"] == True]),
+                              ("Other states", ga[ga["atal_bhujal_state"] == False])]:
                 if len(gs) < 30:
                     continue
-                a, b, c, d = contingency(gs[PRIMARY_P].to_numpy(), gs["event"].to_numpy(bool), trigger)
+                a, b, c, _ = contingency(gs[PRIMARY_P].to_numpy(), gs["event"].to_numpy(bool), trigger)
                 rows.append({"water_year": year, "h": h, "arm": arm, "area": label, "n": len(gs),
                              "n_wells": gs["well_id"].nunique(), "event_rate": (a + c) / len(gs),
                              "mean_p": float(gs[PRIMARY_P].mean()), "mean_p_raw": float(gs["p"].mean()),

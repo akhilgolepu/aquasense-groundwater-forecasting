@@ -27,7 +27,6 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from src.research.forcing_download import imd_file
 from src.research.config import (
     DATA_PROCESSED_DIR,
     EXTERNAL_DIR,
@@ -38,6 +37,7 @@ from src.research.config import (
     INDEX_LAGS_MONTHS,
     SPI_FIT_END_YEAR,
 )
+from src.research.forcing_download import imd_file
 
 IMD_DIR = EXTERNAL_DIR / "imd"
 CAMPAIGN_MONTH = {0: 1, 1: 5, 2: 8, 3: 11}  # season → calendar month of the campaign
@@ -97,7 +97,7 @@ def nearest_valid_cells(lats, lons, grid_lat, grid_lon, valid: np.ndarray, max_r
     out = np.full(len(lats), -1, dtype=np.int64)
     n_lat, n_lon = valid.shape
     for i, (la, lo) in enumerate(zip(lats, lons)):
-        ci, cj = int(round((la - grid_lat[0]) / dlat)), int(round((lo - grid_lon[0]) / dlon))
+        ci, cj = round((la - grid_lat[0]) / dlat), round((lo - grid_lon[0]) / dlon)
         best, best_d = -1, np.inf
         for r in range(max_ring + 1):
             for a in range(ci - r, ci + r + 1):
@@ -331,7 +331,7 @@ def snapshot_features(observations: pd.DataFrame, campaigns_grid: pd.DataFrame) 
     g = g.sort_values(["well_id", "campaign_idx"])
     by = g.groupby("well_id")["snap_rain"]
     for k in (2, 4, 8):
-        g[f"snap_cum{k}"] = by.transform(lambda s: s.rolling(k, min_periods=1).sum())
+        g[f"snap_cum{k}"] = by.transform(lambda s, k=k: s.rolling(k, min_periods=1).sum())
     return g
 
 
@@ -368,8 +368,8 @@ def recharge_correlation(campaigns: pd.DataFrame, jjas_by_well_year: pd.DataFram
         lambda g: g["rise"].corr(g["jjas_mm"]) if len(g) >= 8 else np.nan, include_groups=False
     ).dropna()
     pooled = stats.spearmanr(df["rise"], df["jjas_mm"]).statistic
-    return {"n_wells": int(len(corrs)), "median_r": float(corrs.median()), "share_positive": float((corrs > 0).mean()),
-            "pooled_spearman": float(pooled), "n_pairs": int(len(df))}
+    return {"n_wells": len(corrs), "median_r": float(corrs.median()), "share_positive": float((corrs > 0).mean()),
+            "pooled_spearman": float(pooled), "n_pairs": len(df)}
 
 
 def plot_sanity(report: dict, campaigns: pd.DataFrame, feats: pd.DataFrame, path: Path):

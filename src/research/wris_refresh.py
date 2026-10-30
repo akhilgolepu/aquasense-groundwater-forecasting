@@ -93,12 +93,11 @@ def fetch_district(state: str, district: str, since: str, until: str) -> pd.Data
     cache = CACHE_DIR / f"{state}_{district}_{since}_{until}.parquet".replace(" ", "_").replace("/", "-")
     if cache.exists():
         return pd.read_parquet(cache)
-    rows, n_pages = [], 0
+    rows = []
     for page in range(MAX_PAGES):
         text = _post("/Dataset/Ground%20Water%20Level", {}, accept="text/csv", params={
             "stateName": state, "districtName": district, "agencyName": "CGWB", "startdate": since,
             "enddate": until, "download": "true", "page": page, "size": PAGE_SIZE})
-        n_pages += 1
         if text is None:
             break
         rows += parse_rows(text)
@@ -122,7 +121,7 @@ def run_refresh(states: list[str], since: str, until: str):
             time.sleep(PAUSE_S)
             try:
                 df = fetch_district(state, d, since, until)
-            except Exception as exc:  # keep going; the failure is logged and the district can be retried
+            except Exception as exc:  # noqa: BLE001 — keep going; the failure is logged and the district can be retried
                 log.append({"state": state, "district": d, "error": f"{type(exc).__name__}: {exc}"[:200]})
                 continue
             log.append({"state": state, "district": d, "manual_rows": len(df)})
@@ -136,7 +135,7 @@ def run_refresh(states: list[str], since: str, until: str):
     summary = {
         "run_date": date.today().isoformat(), "states": states, "since": since, "until": until,
         "districts": len(log), "failed": sum("error" in r for r in log),
-        "manual_readings": int(len(upd)), "stations": int(upd["well_id"].nunique()) if len(upd) else 0,
+        "manual_readings": len(upd), "stations": int(upd["well_id"].nunique()) if len(upd) else 0,
         "stations_matching_snapshot": int(upd.loc[upd["in_research_snapshot"], "well_id"].nunique()) if len(upd) else 0,
         "latest_reading": str(upd["timestamp"].max().date()) if len(upd) else None,
         "readings_by_year": upd["timestamp"].dt.year.value_counts().sort_index().to_dict() if len(upd) else {},

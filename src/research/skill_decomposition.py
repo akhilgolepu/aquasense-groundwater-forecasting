@@ -33,7 +33,12 @@ from src.research.benchmark import (
     complete_grid,
     depth_class,
 )
-from src.research.config import DATA_PROCESSED_DIR, HORIZONS, RANDOM_SEED, SKILL_REPORTS_DIR
+from src.research.config import (
+    DATA_PROCESSED_DIR,
+    HORIZONS,
+    RANDOM_SEED,
+    SKILL_REPORTS_DIR,
+)
 from src.research.regions import assign_region
 
 INNER_FIT_END_YEAR = 2012  # inner validation = 2013 … TRAIN_END_YEAR
@@ -68,8 +73,8 @@ FEATURE_GROUPS = {
 }
 
 PARAM_GRID = [{"max_depth": d, "min_child_weight": m} for d, m in product([4, 6, 8], [5, 20])]
-BASE_PARAMS = dict(learning_rate=0.05, subsample=0.8, colsample_bytree=0.8, tree_method="hist",
-                   random_state=RANDOM_SEED, n_jobs=-1)
+BASE_PARAMS = {"learning_rate": 0.05, "subsample": 0.8, "colsample_bytree": 0.8, "tree_method": "hist",
+               "random_state": RANDOM_SEED, "n_jobs": -1}
 
 
 # ── Data ────────────────────────────────────────────────────────────────────
@@ -248,7 +253,7 @@ def run_skill_decomposition():
             mse_dm = panel_dm(test, a, b, "squared")
             mae_dm = panel_dm(test, a, b, "absolute")
             stable = test[(test["y_target"] - test["y_t"]).abs() <= JUMP_SENSITIVITY_M]
-            se = lambda c: np.mean((stable[c] - stable["y_target"]) ** 2)
+            se = lambda c, stable=stable: np.mean((stable[c] - stable["y_target"]) ** 2)
             dm_rows.append({"h": h, "a": a, "b": b,
                             "mse_reduction": float(est), "mae_reduction": float(1 - mae_b / mae_a),
                             "mae_reduction_ci": mae_bootstrap(test, a, b),

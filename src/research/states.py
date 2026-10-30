@@ -48,7 +48,7 @@ def tag_states(lat: pd.Series, lon: pd.Series) -> pd.Series:
     out = np.full(len(pts), None, dtype=object)
     pt_idx, poly_idx = tree.query(pts, predicate="within")
     out[pt_idx] = names[poly_idx]
-    missing = np.flatnonzero(out == None)  # noqa: E711
+    missing = np.flatnonzero(out == None)
     if len(missing):
         near, dist = tree.query_nearest(pts[missing], return_distance=True)
         for k, (i, j) in enumerate(zip(*near)):

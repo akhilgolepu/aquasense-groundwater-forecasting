@@ -29,7 +29,7 @@ from src.research.decision_value import DECISION_REPORTS_DIR
 from src.research.regions import REGIONS, assign_region
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt
 
 PAPER = DATA_PROCESSED_DIR.parent.parent / "paper"
 FIG, TAB = PAPER / "figures", PAPER / "tables"
@@ -500,10 +500,10 @@ def numbers():
 
     aci = cov[(cov["method"] == "Mondrian D×R + recal + ACI") & cov["nominal"].isin([0.8, 0.9]) & cov["group_var"].isin(["Depth", "Region"])]
     aci_worst = {h: (g["coverage"] - g["nominal"]).abs().max() * 100 for h, g in aci.groupby("h")}
-    v = lambda h, ev, a, al: vc[(vc["h"] == h) & (vc["event_id"] == ev) & (vc["arm"] == a) & (vc["alpha"] == al)].iloc[0]  # noqa: E731
-    t = lambda h, ev, tr: trig[(trig["h"] == h) & (trig["event_id"] == ev) & (trig["trigger"] == tr)].iloc[0]  # noqa: E731
+    v = lambda h, ev, a, al: vc[(vc["h"] == h) & (vc["event_id"] == ev) & (vc["arm"] == a) & (vc["alpha"] == al)].iloc[0]
+    t = lambda h, ev, tr: trig[(trig["h"] == h) & (trig["event_id"] == ev) & (trig["trigger"] == tr)].iloc[0]
     g6 = dm.loc[(2, "M0 memory", "M2 + ENSO/IOD")]
-    vmax = lambda ev, h: vc[(vc["event_id"] == ev) & (vc["h"] == h) & (vc["arm"] == "M2 + ENSO/IOD")]["value"].max()  # noqa: E731
+    vmax = lambda ev, h: vc[(vc["event_id"] == ev) & (vc["h"] == h) & (vc["arm"] == "M2 + ENSO/IOD")]["value"].max()
     oracle = [dm.loc[(h, "M2 + ENSO/IOD", "M3 + oracle rain")]["mse_reduction"] * 100 for h in (1, 2, 4)]
     N = {
         "nStations": f"{len(cat):,}", "nManual": f"{(cat['network'] == 'manual').sum():,}",

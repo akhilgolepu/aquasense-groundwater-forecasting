@@ -71,7 +71,7 @@ def test_non_oracle_features_ignore_the_future(season):
 
 
 def test_fitted_normal_features_use_only_the_fit_window_and_the_past():
-    rain, tmean, indices, well_row = _synthetic(1)
+    rain, tmean, _, well_row = _synthetic(1)
     origin = 2020 * 4 + 1  # after the SPI fit period, so the fit is untouched by perturbing 2020+
     keys = pd.DataFrame({"well_id": ["w"], "campaign_idx": [origin]})
     base = compute_origin_features(keys, well_row, rain, tmean, well_row, None).iloc[0]

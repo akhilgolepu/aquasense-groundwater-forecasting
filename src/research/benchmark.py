@@ -17,6 +17,7 @@ All features are computed from information available at the forecast origin.
 """
 
 import json
+
 import numpy as np
 import pandas as pd
 import xgboost as xgb
@@ -234,11 +235,11 @@ def run_benchmark():
         skills = station_skill(te_c, "xgb")
         benchmark["horizons"][str(h)] = {
             "months_ahead": 3 * h,
-            "n_train": int(len(tr)), "n_cal": int(len(ca)), "n_test": int(len(te_c)),
+            "n_train": len(tr), "n_cal": len(ca), "n_test": len(te_c),
             "n_test_wells": int(te_c["well_id"].nunique()),
             "metrics": metrics,
             "station_skill": {
-                "n_wells": int(len(skills)),
+                "n_wells": len(skills),
                 "median": float(np.median(skills)),
                 "share_positive": float(np.mean(skills > 0)),
                 "histogram": np.histogram(np.clip(skills, -1, 1), bins=20, range=(-1, 1))[0].tolist(),
@@ -304,7 +305,7 @@ def run_benchmark():
                         "n": int((which == b).sum())} for b in range(10) if (which == b).sum() >= 30]
         benchmark["horizons"][str(h)]["early_warning"] = {
             "event": f"depth deeper than the well's {int(EXCEEDANCE_PERCENTILE*100)}th percentile for the target season",
-            "n": int(len(ew)), "event_rate": float(event.mean()),
+            "n": len(ew), "event_rate": float(event.mean()),
             "brier": brier, "brier_climatology": brier_clim,
             "brier_skill": float(1 - brier / brier_clim), "reliability": reliability,
         }

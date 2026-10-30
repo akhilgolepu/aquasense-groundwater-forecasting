@@ -33,7 +33,13 @@ import xgboost as xgb
 from scipy import stats
 
 from src.research.benchmark import DEPTH_CLASS_NAMES
-from src.research.config import DATA_PROCESSED_DIR, HORIZONS, NOMINAL_LEVELS, RANDOM_SEED, SKILL_REPORTS_DIR
+from src.research.config import (
+    DATA_PROCESSED_DIR,
+    HORIZONS,
+    NOMINAL_LEVELS,
+    RANDOM_SEED,
+    SKILL_REPORTS_DIR,
+)
 from src.research.skill_decomposition import ARMS, BASE_PARAMS, load_dataset
 
 CALIBRATION_REPORTS_DIR = SKILL_REPORTS_DIR.parent / "calibration"

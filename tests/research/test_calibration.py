@@ -56,7 +56,7 @@ def test_online_mondrian_never_uses_unobserved_residuals():
     test["y_target"] = 0.0
     test["score"] = 0.0
     test.loc[test["target_idx"] == 3, ["score", "y_target"]] = 1000.0
-    lo, hi = online_mondrian(cal, test, ["c"], 0.2, h)
+    _, hi = online_mondrian(cal, test, ["c"], 0.2, h)
     early = test["target_idx"].to_numpy() < 3 + h
     assert np.all(hi[early] <= 1.0)
     assert np.all(np.isfinite(hi))

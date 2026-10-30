@@ -16,7 +16,7 @@ import pandas as pd
 from src.research.config import SKILL_REPORTS_DIR
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt
 
 ARM_STYLE = {  # validated categorical slots (dataviz palette) + neutral greys for baselines
     "anomaly_persistence": ("Anomaly persistence", "#9aa8ab"),

@@ -3,7 +3,12 @@
 import numpy as np
 import pandas as pd
 
-from src.research.ingest import build_campaign_series, classify_networks, harmonise_depth, remove_outliers
+from src.research.ingest import (
+    build_campaign_series,
+    classify_networks,
+    harmonise_depth,
+    remove_outliers,
+)
 
 
 def _obs(well_id, dates, values):

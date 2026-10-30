@@ -9,10 +9,15 @@ Research Pipeline — Phase 4 figures. Reads reports/decision/* and writes PNGs 
 import matplotlib
 import pandas as pd
 
-from src.research.decision_value import DECISION_REPORTS_DIR, EVENTS, PRIMARY_P, PROB_VARIANTS
+from src.research.decision_value import (
+    DECISION_REPORTS_DIR,
+    EVENTS,
+    PRIMARY_P,
+    PROB_VARIANTS,
+)
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt
 
 MONTHS = {1: "3 months", 2: "6 months", 4: "12 months"}
 ARM_COLORS = {"M0 memory": "#2a78d6", "M2 + ENSO/IOD": "#1baf7a", "M3 + oracle rain": "#102a33"}
