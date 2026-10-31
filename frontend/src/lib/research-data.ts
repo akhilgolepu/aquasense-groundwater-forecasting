@@ -190,7 +190,7 @@ export interface DecisionPayload {
 // ── Hooks ────────────────────────────────────────────────────────────────────
 
 async function fetchData<T>(path: string): Promise<T> {
-  const res = await fetch(`/data/${path}`);
+  const res = await fetch(`${import.meta.env.BASE_URL}data/${path}`);
   if (!res.ok) {
     throw new Error(
       `Could not load ${path} (${res.status}). Run "python -m src.research.export_dashboard" to generate the dashboard data.`,

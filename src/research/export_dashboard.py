@@ -28,8 +28,18 @@ import pandas as pd
 import xgboost as xgb
 
 from src.research.benchmark import DEPTH_CLASS_NAMES, premonsoon_trends
-from src.research.calibration import CALIBRATION_REPORTS_DIR, hierarchical_pools, lookup, signed_offsets
-from src.research.config import DATA_PROCESSED_DIR, FRONTEND_DATA_DIR, HORIZONS, SKILL_REPORTS_DIR
+from src.research.calibration import (
+    CALIBRATION_REPORTS_DIR,
+    hierarchical_pools,
+    lookup,
+    signed_offsets,
+)
+from src.research.config import (
+    DATA_PROCESSED_DIR,
+    FRONTEND_DATA_DIR,
+    HORIZONS,
+    SKILL_REPORTS_DIR,
+)
 from src.research.decision_value import (
     ALPHAS,
     DECISION_REPORTS_DIR,
@@ -49,6 +59,17 @@ TRIGGER_GRID = ALPHAS  # same grid as the value curves, so every trigger has a v
 SEASONS = ["Jan", "May", "Aug", "Nov"]
 PRIMARY_INTERVAL = "Mondrian D×R + recal + ACI"
 
+
+
+def strict_json(obj):
+    """Replaces NaN and ±inf (which browsers reject as JSON) with null, recursively."""
+    if isinstance(obj, float):
+        return obj if np.isfinite(obj) else None
+    if isinstance(obj, dict):
+        return {k: strict_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [strict_json(v) for v in obj]
+    return obj
 
 def label(idx: int) -> str:
     return f"{int(idx) // 4}-{SEASONS[int(idx) % 4]}"
@@ -110,13 +131,16 @@ def operational_campaigns() -> tuple[pd.DataFrame, dict]:
     last = campaigns.groupby("well_id")["campaign_idx"].max()
     extra = extra[extra["campaign_idx"] > extra["well_id"].map(last).fillna(-1)]
     info = {"wris_used": True, "wells_extended": int(extra["well_id"].nunique()),
-            "campaigns_added": int(len(extra)), "latest_campaign": label(extra["campaign_idx"].max()) if len(extra) else None}
+            "campaigns_added": len(extra), "latest_campaign": label(extra["campaign_idx"].max()) if len(extra) else None}
     return pd.concat([campaigns, extra[campaigns.columns]], ignore_index=True), info
 
 
 def operational_forcing(campaigns: pd.DataFrame) -> pd.DataFrame:
     """Forcing table extended to any origin campaign the snapshot table lacks (WRIS-extended wells)."""
-    from src.research.forcing_features import compute_origin_features, load_forcing_inputs
+    from src.research.forcing_features import (
+        compute_origin_features,
+        load_forcing_inputs,
+    )
 
     forcing = pd.read_parquet(DATA_PROCESSED_DIR / "forcing_features.parquet")
     have = set(zip(forcing["well_id"], forcing["campaign_idx"]))
@@ -213,7 +237,7 @@ def well_details(campaigns, ops: dict[int, pd.DataFrame]) -> dict[str, dict]:
 # ── Report summaries ────────────────────────────────────────────────────────
 
 def skill_payload() -> dict:
-    boot = json.load(open(SKILL_REPORTS_DIR / "bootstrap.json"))
+    boot = json.loads((SKILL_REPORTS_DIR / "bootstrap.json").read_text())
     strata = pd.read_csv(SKILL_REPORTS_DIR / "strata.csv")
     dm = pd.read_csv(SKILL_REPORTS_DIR / "diebold_mariano.csv")
     ref = pd.read_csv(SKILL_REPORTS_DIR / "reference_metrics.csv")
@@ -243,7 +267,7 @@ def calibration_payload() -> dict:
     preds["year"] = preds["target_idx"] // 4
     preds["r"] = preds["y_target"] - preds["M2 + ENSO/IOD"]
     drift = preds[preds["year"] <= 2024].groupby(["h", "year"])["r"].agg(["median", "size"]).reset_index()
-    jjas = json.load(open(DATA_PROCESSED_DIR.parent.parent / "reports" / "forcing" / "sanity.json"))["all_india_jjas_mm"]
+    jjas = json.loads((DATA_PROCESSED_DIR.parent.parent / "reports" / "forcing" / "sanity.json").read_text())["all_india_jjas_mm"]
     base = np.mean([v for y, v in jjas.items() if 1994 <= int(y) <= 2015])
     return {
         "source": "reports/calibration/coverage.csv; drift from data/processed/skill_predictions.parquet; JJAS from reports/forcing/sanity.json",
@@ -331,7 +355,7 @@ def run_export():
         buckets.setdefault(bucket(well), {})[well] = d
     for b in range(N_BUCKETS):
         with open(wells_dir / f"{b}.json", "w") as f:
-            json.dump(buckets.get(b, {}), f, separators=(",", ":"))
+            json.dump(strict_json(buckets.get(b, {})), f, separators=(",", ":"), allow_nan=False)
 
     skill, calib, decision = skill_payload(), calibration_payload(), decision_payload(event_probs)
     with_trend = [s for s in stations if "trend" in s and s["trend"] is not None]
@@ -341,7 +365,7 @@ def run_export():
         "n_stations": len(catalog), "n_manual": int((catalog["network"] == "manual").sum()),
         "n_dwlr": int((catalog["network"] == "DWLR").sum()), "n_obs": int(catalog["n_obs"].sum()),
         "first_year": int(catalog["first_obs"].min().year), "last_year": int(catalog["last_obs"].max().year),
-        "n_campaign_values": int(len(campaigns)),
+        "n_campaign_values": len(campaigns),
         "trend": {"n_wells": len(with_trend),
                   "sig_deepening": sum(1 for s in with_trend if s["trend"] > 0 and s["trendP"] < 0.05),
                   "sig_rising": sum(1 for s in with_trend if s["trend"] < 0 and s["trendP"] < 0.05)},
@@ -356,7 +380,7 @@ def run_export():
 
     def dump(name, obj):
         with open(FRONTEND_DATA_DIR / name, "w") as f:
-            json.dump(obj, f, separators=(",", ":"), default=lambda x: None)
+            json.dump(strict_json(obj), f, separators=(",", ":"), default=lambda x: None, allow_nan=False)
 
     dump("summary.json", summary)
     dump("stations.json", stations)

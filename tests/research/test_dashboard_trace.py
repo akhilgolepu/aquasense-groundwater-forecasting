@@ -76,3 +76,13 @@ def test_summary_counts_match_processed_data():
     cat = pd.read_parquet(ROOT / "data" / "processed" / "station_catalog.parquet")
     assert s["n_stations"] == len(cat) and s["n_obs"] == int(cat["n_obs"].sum())
     assert all(k in s["sources"] for k in ("skill", "calibration", "decision"))
+
+
+@needs
+def test_every_dashboard_file_is_strict_json():
+    """Browsers reject NaN/Infinity in JSON; a single one blanks the map (found in the leakage audit)."""
+    def reject(token):
+        raise ValueError(f"non-standard JSON constant {token}")
+
+    for path in [*DATA.glob("*.json"), *(DATA / "wells").glob("*.json")]:
+        json.loads(path.read_text(), parse_constant=reject)

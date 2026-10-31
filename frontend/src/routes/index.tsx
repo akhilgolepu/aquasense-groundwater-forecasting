@@ -109,9 +109,11 @@ function Index() {
             {summary.data && gain6 && value3 && (
               <p className="tnum max-w-[50ch] text-[1.1rem] leading-relaxed text-ink-2">
                 Built from {int(summary.data.n_obs)} readings at {int(summary.data.n_stations)}{" "}
-                wells. Monsoon rainfall and El Niño/IOD cut the squared error of six-month forecasts
-                by {pct(gain6.mse_reduction, 0)}. Acting on three-month warnings at a 30% trigger
-                recovers {pct(value3.value, 0)} of a perfect forecast's value.
+                stations; forecasts cover the {int(summary.data.n_manual)} manually read wells.
+                Monsoon rainfall and El Niño/IOD cut the squared error of six-month forecasts by{" "}
+                {pct(gain6.mse_reduction, 0)}. For a user whose cost of acting is 30% of the loss
+                avoided (an assumed ratio), three-month warnings recover {pct(value3.value, 0)} of a
+                perfect forecast's value.
               </p>
             )}
           </div>

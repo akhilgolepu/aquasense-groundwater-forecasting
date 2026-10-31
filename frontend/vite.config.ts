@@ -3,7 +3,10 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
+// DASHBOARD_BASE is the URL path the site is served from: "/" for Vercel or a custom domain,
+// "/<repo>/" for a GitHub Pages project site (see docs/deploy-dashboard.md).
 export default defineConfig({
+  base: process.env["DASHBOARD_BASE"] ?? "/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
