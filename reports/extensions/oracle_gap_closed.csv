@@ -1,10 +1,10 @@
 h,model,share_of_oracle_gap_closed
 1,M2 + CFSv2 forecast,0.4179084910745582
 1,Mean of M2 and Chronos-2,0.6486901242039554
-1,"Mean of M2, LSTM and Chronos-2",1.0302115280121846
+1,"Mean of M2, LSTM and Chronos-2",1.0296920705164265
 2,M2 + CFSv2 forecast,-0.13527283840663323
 2,Mean of M2 and Chronos-2,0.6681633137362527
-2,"Mean of M2, LSTM and Chronos-2",1.0436941180658996
+2,"Mean of M2, LSTM and Chronos-2",1.0122320556888897
 4,M2 + CFSv2 forecast,-0.050898973220000435
 4,Mean of M2 and Chronos-2,0.2084334280611998
-4,"Mean of M2, LSTM and Chronos-2",0.3521639489759319
+4,"Mean of M2, LSTM and Chronos-2",0.36104145815946737

@@ -1,0 +1,25 @@
+fact,value
+raw readings,416952
+raw stations,6440
+raw first reading,1994-01-05
+raw last reading,2025-09-27
+readings after quality control,414106
+stations after quality control,6438
+manual (campaign) wells,5516
+"telemetry (DWLR) wells, not used for forecasting",922
+manual-well campaign values,246887
+manual wells with campaign values,5516
+first campaign year,1994
+last campaign year,2025
+h=1: wells with at least one forecast row,4989
+h=1: test rows (common evaluation set),25340
+h=1: test wells,3249
+h=1: test target campaigns,24
+h=2: wells with at least one forecast row,4963
+h=2: test rows (common evaluation set),24073
+h=2: test wells,3175
+h=2: test target campaigns,24
+h=4: wells with at least one forecast row,4734
+h=4: test rows (common evaluation set),32472
+h=4: test wells,3370
+h=4: test target campaigns,25

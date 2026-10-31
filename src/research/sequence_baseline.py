@@ -14,7 +14,8 @@ One LSTM per horizon, trained on all wells at once (a "global" model, as in Mala
 
 Protocol mirrors `tune_and_fit`: fit on target years ≤ 2012, early-stop on 2013–2015, then refit on all
 training years for the selected number of epochs. Each variant is the mean of N_SEEDS networks.
-Writes `sequence_predictions.parquet` (test rows of the Phase 2 predictions).
+Writes `sequence_predictions.parquet` (test rows) and `sequence_cal_predictions.parquet` (calibration rows,
+2016–2018, used only to check which model combination the calibration years would have chosen).
 """
 
 import warnings
@@ -23,7 +24,12 @@ import numpy as np
 import pandas as pd
 
 from src.research.benchmark import add_expanding_climatology, complete_grid
-from src.research.config import DATA_PROCESSED_DIR, HORIZONS, RANDOM_SEED
+from src.research.config import (
+    DATA_PROCESSED_DIR,
+    HORIZONS,
+    RANDOM_SEED,
+    TRAIN_END_YEAR,
+)
 from src.research.skill_decomposition import ARMS, INNER_FIT_END_YEAR, load_dataset
 
 SEQ_LEN = 16          # campaigns (4 years)
@@ -36,6 +42,12 @@ N_SEEDS = 3
 VARIANTS = {"LSTM memory": ("M0 memory", False), "LSTM + forcing": ("M2 + ENSO/IOD", True)}
 
 
+def rain_scaler(grid: pd.DataFrame) -> tuple[float, float]:
+    """Mean and standard deviation of rain between campaigns, from campaigns up to TRAIN_END_YEAR only."""
+    fit = grid.loc[grid["campaign_idx"] // 4 <= TRAIN_END_YEAR, "rain_since_prev"]
+    return float(fit.mean()), float(fit.std())
+
+
 def sequence_tensor(df: pd.DataFrame, with_rain: bool) -> np.ndarray:
     """[rows, SEQ_LEN, channels] for each (well, origin) in df, oldest step first."""
     campaigns = pd.read_parquet(DATA_PROCESSED_DIR / "gwl_campaigns.parquet")
@@ -43,7 +55,7 @@ def sequence_tensor(df: pd.DataFrame, with_rain: bool) -> np.ndarray:
     if with_rain:
         rain = pd.read_parquet(DATA_PROCESSED_DIR / "forcing_features.parquet")[["well_id", "campaign_idx", "rain_since_prev"]]
         grid = grid.merge(rain, on=["well_id", "campaign_idx"], how="left")
-        mu, sd = grid["rain_since_prev"].mean(), grid["rain_since_prev"].std()
+        mu, sd = rain_scaler(grid)
         grid["rain_z"] = ((grid["rain_since_prev"] - mu) / sd).fillna(0.0)
     by_well = grid.groupby("well_id")
     pos = pd.Series(np.arange(len(grid)), index=pd.MultiIndex.from_frame(grid[["well_id", "campaign_idx"]]))
@@ -158,7 +170,7 @@ def run_sequence_robustness():
     """
     import torch
 
-    from src.research.skill_robustness import BLOCK_DEG, N_FOLDS
+    from src.research.skill_robustness import N_FOLDS, spatial_folds
 
     print("=== Phase 7.2b: LSTM + forcing in the robustness settings ===")
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -170,11 +182,7 @@ def run_sequence_robustness():
         df = load_dataset(h).reset_index(drop=True)
         seq = sequence_tensor(df, with_rain)
         year = df["target_year"].to_numpy()
-        block = (np.floor(df["latitude"] / BLOCK_DEG).astype(int).astype(str) + "_"
-                 + np.floor(df["longitude"] / BLOCK_DEG).astype(int).astype(str))
-        blocks = np.array(sorted(block.unique()))
-        fold_of = dict(zip(blocks, np.random.default_rng(RANDOM_SEED).permutation(len(blocks)) % N_FOLDS))
-        fold = block.map(fold_of).to_numpy()
+        fold = spatial_folds(df)["fold"].to_numpy()
         is_train, is_test = (df["split"] == "train").to_numpy(), (df["split"] == "test").to_numpy()
         runs = [("Split: train ≤2017, test 2020–25", 0, year <= 2017, year <= 2014, year >= 2020)]
         runs += [("Spatial blocks (unseen regions)", k, (fold != k) & is_train,
@@ -209,20 +217,23 @@ def run_sequence_baseline():
         df = load_dataset(h).reset_index(drop=True)
         is_train = (df["split"] == "train").to_numpy()
         inner = is_train & (df["target_year"] <= INNER_FIT_END_YEAR).to_numpy()
-        is_test = (df["split"] == "test").to_numpy()
-        res = df.loc[is_test, ["well_id", "campaign_idx"]].copy()
+        is_eval = df["split"].isin(["cal", "test"]).to_numpy()
+        res = df.loc[is_eval, ["well_id", "campaign_idx", "split"]].copy()
         for name, (arm, with_rain) in VARIANTS.items():
-            cached = cache / f"h{h}_{name.replace(' ', '_').replace('+', 'plus')}.npy"
+            cached = cache / f"h{h}_{name.replace(' ', '_').replace('+', 'plus')}_cal_test.npy"
             if cached.exists():
                 res[name] = np.load(cached)
                 print(f"[h={h}] {name}: cached")
                 continue
             seq = sequence_tensor(df, with_rain)
-            res[name] = fit_predict(df, seq, arm, is_train, inner, is_test, device, f"[h={h}] {name}")
+            res[name] = fit_predict(df, seq, arm, is_train, inner, is_eval, device, f"[h={h}] {name}")
             np.save(cached, res[name].to_numpy())
         out.append(res.assign(h=h))
-    pred = pd.concat(out)
+    both = pd.concat(out)
+    pred = both[both["split"] == "test"].drop(columns="split")
     pred.to_parquet(DATA_PROCESSED_DIR / "sequence_predictions.parquet", index=False)
+    both[both["split"] == "cal"].drop(columns="split").to_parquet(
+        DATA_PROCESSED_DIR / "sequence_cal_predictions.parquet", index=False)
 
     for h in HORIZONS:
         b = base[(base["h"] == h) & (base["split"] == "test")].dropna(subset=["anomaly_persistence"])

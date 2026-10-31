@@ -16,7 +16,12 @@ import numpy as np
 import pandas as pd
 
 from src.research.config import HORIZONS, RANDOM_SEED, SKILL_REPORTS_DIR
-from src.research.skill_decomposition import ARMS, campaign_sign_test, load_dataset, tune_and_fit
+from src.research.skill_decomposition import (
+    ARMS,
+    campaign_sign_test,
+    load_dataset,
+    tune_and_fit,
+)
 
 ROBUST_ARMS = ["M0 memory", "M1 + past forcing", "M2 + ENSO/IOD", "M3 + oracle rain"]
 PAIRS = [("M0 memory", "M1 + past forcing"), ("M0 memory", "M2 + ENSO/IOD"), ("M2 + ENSO/IOD", "M3 + oracle rain")]
@@ -48,14 +53,18 @@ def alternative_split(h: int) -> pd.DataFrame:
     return test
 
 
-def spatial_blocks(h: int) -> pd.DataFrame:
-    df = load_dataset(h)
+def spatial_folds(df: pd.DataFrame) -> pd.DataFrame:
+    """Adds `fold`: 2° × 2° blocks of well locations, randomly assigned to N_FOLDS folds (a well never spans folds)."""
     block = (np.floor(df["latitude"] / BLOCK_DEG).astype(int).astype(str) + "_"
              + np.floor(df["longitude"] / BLOCK_DEG).astype(int).astype(str))
     blocks = np.array(sorted(block.unique()))
     rng = np.random.default_rng(RANDOM_SEED)
     fold_of = dict(zip(blocks, rng.permutation(len(blocks)) % N_FOLDS))
-    df["fold"] = block.map(fold_of)
+    return df.assign(fold=block.map(fold_of))
+
+
+def spatial_blocks(h: int) -> pd.DataFrame:
+    df = spatial_folds(load_dataset(h))
     parts = []
     for k in range(N_FOLDS):
         train = df[(df["fold"] != k) & (df["split"] == "train")]

@@ -1,0 +1,10 @@
+h,setting,test_rows,test_wells,skill_M2
+1,"time only (all wells, train ≤ 2015)",25340,3249,0.541192209731107
+1,"region only (other blocks, all years)",25340,3249,0.5771677882250491
+1,"time + region (other blocks, train ≤ 2015)",25340,3249,0.5362099305082089
+2,"time only (all wells, train ≤ 2015)",24073,3175,0.5719602196710412
+2,"region only (other blocks, all years)",24073,3175,0.599083388580908
+2,"time + region (other blocks, train ≤ 2015)",24073,3175,0.55032020818071
+4,"time only (all wells, train ≤ 2015)",32472,3370,0.21155465877325275
+4,"region only (other blocks, all years)",32472,3370,0.2749113184547969
+4,"time + region (other blocks, train ≤ 2015)",32472,3370,0.18293726069644634

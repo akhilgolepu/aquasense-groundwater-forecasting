@@ -17,7 +17,12 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 
-from src.research.config import DATA_PROCESSED_DIR, HORIZONS, RANDOM_SEED, SKILL_REPORTS_DIR
+from src.research.config import (
+    DATA_PROCESSED_DIR,
+    HORIZONS,
+    RANDOM_SEED,
+    SKILL_REPORTS_DIR,
+)
 from src.research.skill_decomposition import ARMS, load_dataset
 
 CHRONOS_MODEL = "amazon/chronos-2"
@@ -42,8 +47,13 @@ def random_forest_predictions() -> pd.DataFrame:
     return pd.concat(out)
 
 
-def chronos_predictions(origins: pd.DataFrame) -> pd.DataFrame:
-    """Forecasts PRED_STEPS campaigns from every (well, origin) in `origins` with three Chronos-2 variants."""
+def chronos_predictions(origins: pd.DataFrame, only: list[str] | None = None) -> pd.DataFrame:
+    """
+    Forecasts PRED_STEPS campaigns from every (well, origin) in `origins` with the three Chronos-2 variants
+    (or the variants named in `only`). GW_DEVICE=cpu keeps the GPU free for other jobs.
+    """
+    import os
+
     import torch
     from chronos import Chronos2Pipeline
 
@@ -52,7 +62,7 @@ def chronos_predictions(origins: pd.DataFrame) -> pd.DataFrame:
     series = {w: g.set_index("campaign_idx")["depth_mbgl"] for w, g in campaigns.groupby("well_id")}
     rain = {w: g.set_index("campaign_idx")["rain_since_prev"] for w, g in forcing.groupby("well_id")}
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = os.environ.get("GW_DEVICE") or ("cuda" if torch.cuda.is_available() else "cpu")
     pipe = Chronos2Pipeline.from_pretrained(CHRONOS_MODEL, device_map=device)
     print(f"Chronos-2 loaded on {device}")
 
@@ -75,6 +85,8 @@ def chronos_predictions(origins: pd.DataFrame) -> pd.DataFrame:
     variants = {"Chronos-2 zero-shot": (False, False), "Chronos-2 + past rain": (True, False),
                 "Chronos-2 + future rain (oracle)": (True, True)}
     for name, (past, future) in variants.items():
+        if only is not None and name not in only:
+            continue
         preds = []
         batch = 1024
         for i in range(0, len(rows), batch):

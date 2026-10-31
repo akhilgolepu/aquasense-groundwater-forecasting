@@ -1,0 +1,42 @@
+,,,train_skill,train_skill,test_skill,test_skill,change_vs_full,change_vs_full
+,,,mean,std,mean,std,mean,std
+h,experiment,variant,,,,,,
+1,baseline,anomaly persistence,,,0.4038,,,
+1,baseline,climatology,,,0.0996,,,
+1,baseline,persistence,,,0.0,,,
+1,baseline,seasonal naive,,,0.1944,,,
+1,drop group,ENSO/IOD,,,0.5406,0.0028,-0.0012,0.0025
+1,drop group,Groundwater memory,,,0.4135,0.0009,-0.1282,0.0024
+1,drop group,Location & borehole,,,0.5409,0.0005,-0.0009,0.002
+1,drop group,Past rainfall & temperature,,,0.5387,0.0013,-0.0031,0.0016
+1,drop group,Season & climatology,,,0.5106,0.0054,-0.0311,0.0046
+1,full M0,M0 memory,0.7367,0.0015,0.5336,0.0022,,
+1,full M2,M2 + ENSO/IOD,0.7298,0.0003,0.5418,0.0015,,
+1,shuffled target,M2 + ENSO/IOD,,,-0.0114,0.0086,,
+1,within-well time shuffle,M2 + ENSO/IOD,,,0.4323,0.0176,,
+2,baseline,anomaly persistence,,,0.4442,,,
+2,baseline,climatology,,,0.3324,,,
+2,baseline,persistence,,,0.0,,,
+2,baseline,seasonal naive,,,0.4039,,,
+2,drop group,ENSO/IOD,,,0.5615,0.0007,-0.0076,0.0018
+2,drop group,Groundwater memory,,,0.4385,0.0014,-0.1305,0.0024
+2,drop group,Location & borehole,,,0.563,0.0014,-0.006,0.0012
+2,drop group,Past rainfall & temperature,,,0.5642,0.0009,-0.0048,0.0033
+2,drop group,Season & climatology,,,0.5435,0.0006,-0.0255,0.0024
+2,full M0,M0 memory,0.7191,0.0005,0.5499,0.0009,,
+2,full M2,M2 + ENSO/IOD,0.7558,0.001,0.569,0.0026,,
+2,shuffled target,M2 + ENSO/IOD,,,-0.0331,0.0305,,
+2,within-well time shuffle,M2 + ENSO/IOD,,,0.4483,0.0135,,
+4,baseline,anomaly persistence,,,0.0,,,
+4,baseline,climatology,,,-0.0906,,,
+4,baseline,persistence,,,0.0,,,
+4,baseline,seasonal naive,,,0.0,,,
+4,drop group,ENSO/IOD,,,0.2078,0.0041,-0.0058,0.0017
+4,drop group,Groundwater memory,,,-0.0037,0.0051,-0.2174,0.0054
+4,drop group,Location & borehole,,,0.2021,0.0025,-0.0116,0.0051
+4,drop group,Past rainfall & temperature,,,0.2073,0.0046,-0.0064,0.0056
+4,drop group,Season & climatology,,,0.2152,0.0027,0.0015,0.0051
+4,full M0,M0 memory,0.3613,0.0015,0.1997,0.0016,,
+4,full M2,M2 + ENSO/IOD,0.4539,0.001,0.2137,0.0026,,
+4,shuffled target,M2 + ENSO/IOD,,,-0.0319,0.0245,,
+4,within-well time shuffle,M2 + ENSO/IOD,,,0.4369,0.0073,,

@@ -20,7 +20,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from src.research.config import DATA_PROCESSED_DIR, HORIZONS, RANDOM_SEED
+from src.research.config import DATA_PROCESSED_DIR, HORIZONS
 from src.research.config import EXTENSIONS_REPORTS_DIR as EXT_REPORTS_DIR
 from src.research.skill_decomposition import (
     ARMS,
@@ -33,7 +33,7 @@ from src.research.skill_decomposition import (
     panel_dm,
     tune_and_fit,
 )
-from src.research.skill_robustness import BLOCK_DEG, N_FOLDS
+from src.research.skill_robustness import N_FOLDS, spatial_folds
 
 FORECAST = ["fc_rain", "fc_rain_ratio"]
 NEIGHBOURS = ["nb_anom_mean", "nb_d1_mean", "nb_d4_mean", "nb_n", "nb_dist_km"]
@@ -174,11 +174,7 @@ def robustness(h: int) -> pd.DataFrame:
     parts.append(test.assign(setting="Split: train ≤2017, test 2020–25"))
     print(f"[h={h}] robustness: alternative split done")
 
-    block = (np.floor(df["latitude"] / BLOCK_DEG).astype(int).astype(str) + "_"
-             + np.floor(df["longitude"] / BLOCK_DEG).astype(int).astype(str))
-    blocks = np.array(sorted(block.unique()))
-    fold_of = dict(zip(blocks, np.random.default_rng(RANDOM_SEED).permutation(len(blocks)) % N_FOLDS))
-    df["fold"] = block.map(fold_of)
+    df = spatial_folds(df)
     for k in range(N_FOLDS):
         train = df[(df["fold"] != k) & (df["split"] == "train")]
         test = df[(df["fold"] == k) & (df["split"] == "test")].copy()
