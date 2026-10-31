@@ -409,8 +409,9 @@ def run_bootstrap() -> pd.DataFrame:
         d["post hoc M2 + LSTM + Chronos-2"] = d[["M2 + ENSO/IOD", "LSTM + forcing", "Chronos-2 + past rain"]].mean(axis=1)
         best_single = max(SINGLES, key=lambda c: skill(d, c))
         for model, label in (("calibration-selected", chosen), ("post hoc M2 + LSTM + Chronos-2", "M2 + LSTM + Chronos-2")):
-            for ref in ("M2 + ENSO/IOD", best_single, "M3 + oracle rain"):
-                rows.append({"h": h, "months": 3 * h, "model": model, "combination": label, "reference": ref,
+            for ref in ("y_t", "M2 + ENSO/IOD", best_single, "M3 + oracle rain"):  # vs y_t = skill vs persistence
+                rows.append({"h": h, "months": 3 * h, "model": model, "combination": label,
+                             "reference": "persistence" if ref == "y_t" else ref,
                              "best_single_model": best_single, "test_rows": len(d), "test_wells": d["well_id"].nunique(),
                              "campaigns": d["target_idx"].nunique(), "skill_model": skill(d, model),
                              "skill_reference": skill(d, ref), "mse_reduction": mse_reduction(d, ref, model),
