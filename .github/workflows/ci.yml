@@ -1,0 +1,26 @@
+# Lint and tests on every push and pull request. Tests that need the processed data skip themselves,
+# so CI checks the leakage guards and statistics on synthetic data.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          pip install ruff==0.17.1
+          pip install numpy==2.4.3 pandas==2.3.3 pyarrow==23.0.1 scipy==1.17.1 scikit-learn==1.8.0 xgboost==3.4.1 pytest==9.1.1
+      - name: Lint
+        run: ruff check src/research tests
+      - name: Test
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+        run: python -m pytest tests/research

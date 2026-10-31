@@ -70,10 +70,14 @@ def test_value_curves_and_triggers_match_decision_report():
     assert checked >= 9
 
 
+CATALOG = ROOT / "data" / "processed" / "station_catalog.parquet"
+
+
 @needs
+@pytest.mark.skipif(not CATALOG.exists(), reason="run src.research.ingest first (fresh clone)")
 def test_summary_counts_match_processed_data():
     s = load("summary.json")
-    cat = pd.read_parquet(ROOT / "data" / "processed" / "station_catalog.parquet")
+    cat = pd.read_parquet(CATALOG)
     assert s["n_stations"] == len(cat) and s["n_obs"] == int(cat["n_obs"].sum())
     assert all(k in s["sources"] for k in ("skill", "calibration", "decision"))
 

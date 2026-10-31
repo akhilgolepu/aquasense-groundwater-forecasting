@@ -1,71 +1,125 @@
-# AquaSense — groundwater-level forecasting for India
+# AquaSense: seasonal groundwater-level forecasts for India
 
-Research code, results and dashboard for the paper
-**“Monsoon forcing, depth-aware calibration and decision value in national-scale groundwater
-forecasting for India”** (draft: [paper/main.pdf](paper/main.pdf)).
+India pumps more groundwater than any other country, and most of its aquifers are refilled only once a year, by
+the monsoon. Farmers, district officers and schemes such as the Atal Bhujal Yojana need to know, before the dry
+season, how deep the water table will be in a few months, how far to trust that number, and whether a warning is
+worth acting on. This project forecasts water levels 3, 6 and 12 months ahead at about 5,000 Central Ground Water
+Board (CGWB) monitoring wells, adds uncertainty ranges that are checked separately for shallow and deep wells,
+turns them into warnings, and tests all of it on years the models never saw (2019–2025).
 
-Using 414 106 quality-controlled readings from 6 438 Central Ground Water Board wells (1994–2025),
-gridded IMD rainfall and temperature, and ENSO / Indian Ocean Dipole indices, it asks three questions:
+## Best verified result
 
-| Question | Answer (test period 2019–2025) | Details |
-|---|---|---|
-| **RQ1** Does monsoon forcing add skill to groundwater memory? | A small, robust gain, largest at 6 months: 5.0 % less squared error, better in 22 of 24 test campaigns, also in unseen regions. A perfect rainfall forecast would add 5.5–9.6 % more. The rainfall column of the public data file is a one-day snapshot and adds nothing. | [docs/08](docs/08-skill-decomposition.md) |
-| **RQ2** Can intervals be trusted for shallow and deep wells alike? | One interval width covers 88 % of shallow-well readings but 46 % in wells ≥ 40 m. Pools by depth × region, updated online with adaptive conformal inference, keep every depth and region class within 1.6 / 1.7 / 3.0 points of nominal at 3 / 6 / 12 months. | [docs/09](docs/09-uncertainty-calibration.md) |
-| **RQ3** Are the warnings worth acting on? | Yes, once probabilities are recalibrated on a rolling window: peak relative economic value 0.43 (deeper than usual, 3 months) and 0.69 (water below an 8 m pump-suction limit, 6 months). Rule: warn when p ≥ cost/loss. | [docs/10](docs/10-decision-value.md) |
+From [RESULTS.md](RESULTS.md), where every number has its metric, test-set size, interval and source file:
 
-## Repository
+- **Forecasting.** Skill means the share of persistence's squared error removed; persistence assumes the level
+  stays where it is. The best forecast is an equal-weight combination of gradient boosting, a random forest and
+  an LSTM, chosen on the 2016–2018 calibration years. On 2019–2025 it scores **0.534 / 0.590 / 0.235** at 3 / 6 /
+  12 months, on 31,468 / 30,424 / 32,472 forecasts. That is **4.2–4.7 % lower squared error than XGBoost** at 3–6
+  months (95 % intervals above zero). It is no better than the LSTM alone: the difference is within noise.
+- **Monsoon rainfall helps a little, and a perfect rainfall forecast would help more.** Observed rainfall,
+  temperature and ENSO/IOD cut 6-month error by 5.0 % [3.3, 6.8], better in 22 of 24 test campaigns. Knowing the
+  rain that actually fell would add another 5.5–9.6 %. Real NCEP CFSv2 seasonal forecasts capture none of that.
+- **Uncertainty that holds for every kind of well.** One interval width covers 88 % of readings in wells
+  shallower than 5 m but only 46 % in wells 40 m or deeper. Intervals pooled by depth and region and updated as
+  readings arrive stay within **1.6 / 1.7 / 3.0 percentage points** of the 80 % and 90 % targets for every depth
+  and region class.
+- **Warnings with economic value, estimated under assumed costs.** No costs were measured. For a user whose cost
+  of acting is 30 % of the loss avoided, 3-month "deeper than usual" warnings recover 0.37 [0.34, 0.39] of a
+  perfect forecast's value. The value stays positive for cost–loss ratios from 0.04 to 0.92.
+
+The evaluation was audited for leakage ([LEAKAGE_AUDIT.md](LEAKAGE_AUDIT.md)). The audit found no time leakage in
+the main evaluation. It fixed one small leak, showed that another did not inflate the results, and withdrew an
+earlier claim about the model combination.
+
+## Dashboard
+
+![The AquaSense dashboard: a well's observed and forecast depth, and the monitoring network coloured by warning](docs/dashboard.png)
+
+The dashboard is a static React site (`frontend/`) that reads the exported results in `frontend/public/data/`. To
+run it locally, use `cd frontend && npm ci && npm run dev`. To publish it, see
+[docs/deploy-dashboard.md](docs/deploy-dashboard.md) (GitHub Pages or Vercel).
+
+## How it works
+
+```
+CGWB readings (Kaggle copy, data/raw/) ──► ingest: real dates, sign harmonisation, outlier filter, 4 campaigns/year
+IMD rain + temperature, NOAA ENSO/IOD   ──► forcing features (trailing windows only; normals fitted ≤ 2015)
+NCEP CFSv2 forecasts (IRI)              ──► seasonal-forecast features (issued before each forecast)
+                                              │
+              time-blocked split by target year: train ≤ 2015 · calibrate 2016–18 · test 2019–25
+                                              │
+   XGBoost M0 (memory) ⊂ M1 (+ past weather) ⊂ M2 (+ ENSO/IOD) ⊂ M3 (+ future rain, reference only)
+   Random Forest · global LSTM · Chronos-2 (zero-shot) · equal-weight combination chosen on 2016–18
+                                              │
+   conformal intervals by depth × region, updated online ──► warning probabilities, recalibrated on recent outcomes
+                                              │
+   reports/ (every table and figure) ──► paper/ (manuscript) and frontend/public/data/ (dashboard)
+```
 
 | Path | Content |
 |---|---|
-| `src/research/` | The pipeline: ingestion, forcing, skill decomposition, calibration, decision value, dashboard export, paper figures |
-| `tests/research/` | 56 tests, including leakage tests on synthetic data and an end-to-end look-ahead test on the real data |
-| `reports/` | Every result table and figure (CSV / JSON / PNG) |
-| `paper/` | Manuscript (`main.tex`, `main.pdf`), generated figures, tables and `numbers.tex` |
-| `frontend/` | Static dashboard (React + Vite) reading `frontend/public/data/` |
-| `docs/` | Process journal, audit, literature review, research gaps, phase plan, one document per phase |
-| `legacy/` | The original pipeline, retired because it trained on borehole depth instead of water level ([why](docs/01-project-audit.md)) |
+| `src/research/` | The pipeline: ingestion, forcing, models, calibration, decision value, leakage audit, dashboard export, paper figures |
+| `tests/research/` | 72 tests, including leakage guards on synthetic data and an end-to-end look-ahead test on the real data |
+| `reports/` | Every result table and figure (CSV / JSON / PNG); `reports/audit/` holds the leakage audit |
+| `paper/` | Manuscript (`main.tex`), generated figures, tables and `numbers.tex` |
+| `frontend/` | Static dashboard (React, Vite, Tailwind, Recharts) |
+| `docs/` | Process journal, data card, one document per part of the work ([index](docs/README.md)) |
+| `legacy/` | The original pipeline, kept for the record ([why it was retired](docs/01-project-audit.md)) |
 
 ## Reproduce
 
 ```bash
-conda activate anpr                         # Python 3.12; pip install -r requirements-research.txt
-bash scripts/reproduce.sh --forcing --phase2 --phase3 --phase4
-python -m src.research.export_dashboard     # dashboard data
-python -m src.research.paper_figures        # paper figures, tables, numbers
-cd paper && latexmk -pdf main.tex
+conda create -n anpr python=3.12 && conda activate anpr      # any name works: set GW_CONDA_ENV=<name>
+pip install -r requirements-research.txt
+bash scripts/reproduce.sh                                     # tests → ingest → benchmark, with a reference check
 ```
 
-`reproduce.sh` downloads the public forcing data (IMD via `imdlib`, NOAA PSL indices), rebuilds every
-result from `data/raw/` and asserts reference values at each phase. Phase 2 runs Chronos-2 on a GPU if
-one is available (about 45 minutes in total on 16 cores).
+That default run was tested on 2026-10-31 from a fresh `git clone` (see below). The full chain adds flags:
+`--forcing` downloads IMD and NOAA data (about 1 GB, an hour the first time), and `--phase2 --phase3 --phase4
+--phase7 --audit` rebuild every result in the README. That takes several hours and is much faster with a GPU
+(Chronos-2, the LSTM). Each stage asserts a reference value and stops if a result changes. The full chain has
+been run in the working copy but not yet from a clean clone.
 
-Dashboard:
+Lint and tests, as in CI (`.github/workflows/ci.yml`):
 
 ```bash
-cd frontend && npm install
-npm run dev        # http://localhost:5173
-npm run build      # static site in frontend/dist/, deployable to any static host
+ruff check src/research tests
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/research
 ```
 
-Optional: refresh manual-well readings from India-WRIS for the dashboard's operational forecasts
-(the research results are not affected): `python -m src.research.wris_refresh --states Rajasthan`.
+## Limitations
 
-## Data
+- **Team project.** This is a three-person B.Tech project. The process journal records the work, but it does not
+  say who did each part (see the next section).
+- **Data licence.** The groundwater levels come from a public Kaggle compilation of CGWB data. The compiler and
+  download query are not recorded, and its redistribution terms have not been confirmed. The original CGWB /
+  India-WRIS data are under the Government Open Data Licence – India. The raw file is in `data/raw/`; check its
+  terms before redistributing it ([data card](docs/data-card.md)).
+- **Not validated.**
+  - Pumping is not observed, so the models cannot separate a pumping response from a climate response.
+  - Most manual records end in 2022–2023, so the latest test years are thin.
+  - Economic value uses assumed, not measured, costs.
+  - Some choices were made after seeing test results. They are labelled as post hoc in the docs: probability
+    recalibration, two interval variants and the warning triggers.
+  - Squared-error results depend on how gross reading errors are filtered (LEAKAGE_AUDIT §2.1).
+  - It is unknown whether Chronos-2's pretraining data included this public compilation.
+  - Nothing has been tested with real users, and no forecast has been issued ahead of time.
+- **Regions.** Regions are coarse latitude–longitude boxes, not aquifer boundaries. Telemetry (DWLR) wells are
+  not used for forecasting.
 
-Groundwater levels: a public compilation of CGWB monitoring data (`data/raw/`, see the
-[data card](docs/data-card.md)). Rainfall and temperature: IMD gridded data (Pai et al., 2014;
-Srivastava et al., 2009). Niño 3.4 and DMI: NOAA PSL (HadISST). State boundaries: geoBoundaries.
-Redistribution terms of the groundwater compilation are being confirmed before processed data are archived.
+## My contribution
+
+> _To be written by me: which parts I designed, built and can explain in detail, and which were done by my
+> teammates._
 
 ## Citation and licence
 
-See [CITATION.cff](CITATION.cff). Code is under the [MIT licence](LICENSE); results, figures, the manuscript
-and docs are under CC BY 4.0; third-party data in `data/raw/` keep their own terms ([LICENSES.md](LICENSES.md)).
+See [CITATION.cff](CITATION.cff). Code is under the [MIT licence](LICENSE). Results, figures, the manuscript and
+docs are under CC BY 4.0. Third-party data in `data/raw/` keep their own terms ([LICENSES.md](LICENSES.md)).
 
 ## How this project got here
 
-The original version of this repository reported R² = 0.9998 from a Temporal Fusion Transformer with
-GA/PSO pumping optimisation. An audit found that the model was trained on each borehole's constant
-depth instead of its water level, so those results were withdrawn. The full record of the audit, the
-literature survey, the choice of research gaps and every phase since is in
-[docs/00-process-journal.md](docs/00-process-journal.md).
+The first version of this repository reported R² = 0.9998 from a Temporal Fusion Transformer with a pumping
+optimiser. An audit found that it had been trained on each borehole's constant construction depth instead of
+its water level, so those results were withdrawn. The audit, the literature survey, the choice of research gaps
+and every step since are recorded in [docs/00-process-journal.md](docs/00-process-journal.md).
