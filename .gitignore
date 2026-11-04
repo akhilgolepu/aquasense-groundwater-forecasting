@@ -80,3 +80,5 @@ report/
 data/processed/audit_cal_base.parquet
 data/processed/audit_cal_predictions.parquet
 data/processed/sequence_cal_predictions.parquet
+data/processed/showcase_predictions.parquet
+data/processed/showcase_rf_robustness_h*.parquet

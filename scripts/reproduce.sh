@@ -8,7 +8,8 @@
 #   … --phase4                                   # also decision value and figures (Phase 4, needs Phases 2–3)
 #   … --phase7                                   # also the model extensions: CFSv2 forecasts, LSTM, combination
 #                                                #   (Phase 7, needs Phase 2; GPU recommended, ~1 h)
-#   … --audit                                    # also the leakage audit (LEAKAGE_AUDIT.md; needs Phases 2–4 and 7)
+#   … --audit                                    # also the leakage audit (LEAKAGE_AUDIT.md) and the dashboard model
+#                                                #   showcase (needs Phases 2–4 and 7)
 # The conda environment is "anpr" unless GW_CONDA_ENV names another one.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -115,6 +116,9 @@ fi
 
 if [[ $AUDIT == 1 ]]; then
   python -m src.research.leakage_audit inventory qc spatial sanity cal selection bootstrap value facts
+  # Dashboard model showcase (needs the audit's combination choice). Timing is machine-specific: run
+  # `python -m src.research.model_showcase timing` separately on a GPU machine if wanted.
+  python -m src.research.model_showcase main robustness replay export
 fi
 
 echo "Reproduction complete."

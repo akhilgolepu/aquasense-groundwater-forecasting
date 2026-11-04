@@ -1,0 +1,13 @@
+{
+  "h": 2,
+  "train_rows": 143751,
+  "test_rows": 31548,
+  "cpu_threads": 16,
+  "gpu": "NVIDIA GeForce RTX 5060",
+  "m0": 20.7,
+  "m2": 55.9,
+  "rf": 25.2,
+  "lstm": 40.0,
+  "chronos": 35.6,
+  "chronos_origins": 31548
+}
