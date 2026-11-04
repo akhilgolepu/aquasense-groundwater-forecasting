@@ -6,6 +6,7 @@ import { Hydrograph, HydrographLegend } from "@/components/hydrograph";
 import { NetworkMap, layerClasses, layerCounts } from "@/components/network-map";
 import type { MapLayer, WarningSettings } from "@/components/network-map";
 import { WellExplorer } from "@/components/well-explorer";
+import { ModelShowcase } from "@/components/models";
 import {
   CoverageFindings,
   DecisionPanel,
@@ -26,6 +27,7 @@ import {
   pct,
   useCalibration,
   useDecision,
+  useModels,
   useSkill,
   useStations,
   useSummary,
@@ -61,6 +63,7 @@ function Index() {
   const skill = useSkill();
   const calibration = useCalibration();
   const decision = useDecision();
+  const models = useModels();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [layer, setLayer] = useState<MapLayer>("warnings");
@@ -76,7 +79,9 @@ function Index() {
     if (!selectedId && featured) setSelectedId(featured.id);
   }, [featured, selectedId]);
 
-  const loadError = [summary, stations, skill, calibration, decision].find((q) => q.error)?.error;
+  const loadError = [summary, stations, skill, calibration, decision, models].find(
+    (q) => q.error,
+  )?.error;
   const gain6 = skill.data?.gains.find(
     (g) => g.h === 2 && g.a === "M0 memory" && g.b === "M2 + ENSO/IOD",
   );
@@ -284,6 +289,19 @@ function Index() {
             <CoverageFindings data={calibration.data} h={horizon} />
           ) : (
             <div className="h-[300px] animate-pulse rounded-md bg-sunk" />
+          )}
+        </Section>
+
+        {/* ── Models ── */}
+        <Section
+          id="models"
+          title="Every model, on the same test"
+          lede="Thirteen models forecast the same 2019–2025 readings. They are scored against the same simple rule, with intervals, on wells and years they never saw, including the ones that did not work."
+        >
+          {models.data && stations.data ? (
+            <ModelShowcase data={models.data} stations={stations.data} wellId={selectedId} />
+          ) : (
+            <div className="h-[520px] animate-pulse rounded-md bg-sunk" />
           )}
         </Section>
 

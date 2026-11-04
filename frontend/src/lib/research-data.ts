@@ -187,6 +187,90 @@ export interface DecisionPayload {
   }[];
 }
 
+export type ModelKey =
+  | "persistence"
+  | "climatology"
+  | "anomaly"
+  | "m0"
+  | "m2"
+  | "rf"
+  | "lstm_mem"
+  | "lstm"
+  | "chronos"
+  | "combo"
+  | "snapshot"
+  | "cfsv2"
+  | "m3";
+export type ModelFamily = "baseline" | "boosting" | "learner" | "combination" | "reference";
+export type ModelSetting = "main" | "split" | "blocks";
+
+export interface ModelScore {
+  h: number;
+  setting: ModelSetting;
+  model: ModelKey;
+  rows: number;
+  wells: number;
+  campaigns: number;
+  skill: number;
+  skill_lo: number;
+  skill_hi: number;
+  mae_skill: number;
+  mae_skill_lo: number;
+  mae_skill_hi: number;
+  rmse: number;
+  mae: number;
+}
+
+/** How much model b reduces model a's squared error, and in how many test campaigns b has the lower MAE. */
+export interface ModelPair {
+  h: number;
+  a: ModelKey;
+  b: ModelKey;
+  mse_reduction: number;
+  lo: number;
+  hi: number;
+  mae_reduction: number;
+  b_wins: number;
+  campaigns: number;
+  sign_p: number;
+}
+
+export type CampaignMae = { h: number; t: string; n: number } & Record<ModelKey, number>;
+
+export interface ModelStratum {
+  h: number;
+  stratum: "depth" | "region" | "season";
+  value: string;
+  model: ModelKey;
+  rows: number;
+  wells: number;
+  skill: number;
+}
+
+export interface ModelsPayload {
+  source: string;
+  models: { key: ModelKey; column: string; family: ModelFamily; inputs: number | null }[];
+  /** Members of the combination chosen on the calibration years, per horizon. */
+  combination: Record<HorizonKey, ModelKey[]>;
+  scores: ModelScore[];
+  pairs: ModelPair[];
+  campaigns: CampaignMae[];
+  strata: ModelStratum[];
+  timing:
+    | (Partial<Record<ModelKey, number>> & {
+        h: number;
+        train_rows: number;
+        test_rows: number;
+        cpu_threads: number;
+        gpu: string | null;
+        chronos_origins: number;
+      })
+    | null;
+}
+
+/** Test-period forecasts of each model at one well and horizon: target campaigns, observed depth, forecasts. */
+export type ModelReplay = { t: string[]; y: number[] } & Partial<Record<ModelKey, number[]>>;
+
 // ── Hooks ────────────────────────────────────────────────────────────────────
 
 async function fetchData<T>(path: string): Promise<T> {
@@ -231,6 +315,26 @@ export const useDecision = () =>
     queryFn: () => fetchData<DecisionPayload>("decision.json"),
     ...forever,
   });
+
+export const useModels = () =>
+  useQuery({
+    queryKey: ["data", "models"],
+    queryFn: () => fetchData<ModelsPayload>("models.json"),
+    ...forever,
+  });
+
+/** Per-well test forecasts of every model, in the same 64 buckets as the well detail. */
+export function useModelReplay(station: Station | undefined) {
+  const bucket = station?.b;
+  const query = useQuery({
+    queryKey: ["data", "models", bucket],
+    queryFn: () =>
+      fetchData<Record<string, Partial<Record<HorizonKey, ModelReplay>>>>(`models/${bucket}.json`),
+    enabled: bucket !== undefined,
+    ...forever,
+  });
+  return { ...query, replay: station ? query.data?.[station.id] : undefined };
+}
 
 /** Per-well detail lives in 64 bucket files (bucket = sum of character codes mod 64). */
 export function useWellDetail(station: Station | undefined) {
