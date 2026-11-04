@@ -589,6 +589,98 @@ def audit_numbers() -> dict:
     }
 
 
+# ── Compact tables for the 6-page IEEE version (paper/ieee/) ────────────────
+
+def ieee_table(path, caption, label, header, rows, colspec, note=None):
+    """Single-column IEEE table (booktabs, footnotesize)."""
+    lines = [r"\begin{table}[!t]", r"\caption{" + caption + "}", r"\label{" + label + "}", r"\centering\footnotesize",
+             r"\setlength{\tabcolsep}{3.5pt}", r"\begin{tabular}{" + colspec + "}", r"\toprule", " & ".join(header) + r" \\",
+             r"\midrule"]
+    lines += [" & ".join(r) + r" \\" for r in rows]
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    if note:
+        lines += [r"\par\smallskip\parbox{\columnwidth}{\scriptsize " + note + "}"]
+    lines += [r"\end{table}"]
+    (TAB / "ieee").mkdir(parents=True, exist_ok=True)
+    (TAB / "ieee" / path).write_text("\n".join(lines) + "\n")
+
+
+def ieee_tables():
+    """Four tables that fit one column each; every value is read from reports/."""
+    f3 = lambda x: f"{x:.3f}".replace("-", "$-$")
+    boot = {(b["h"], b["model"]): b for b in json.loads((SKILL_REPORTS_DIR / "bootstrap.json").read_text())}
+    dm = pd.read_csv(SKILL_REPORTS_DIR / "diebold_mariano.csv").set_index(["h", "a", "b"])
+
+    # I. Nested arms: skill against persistence, and the forcing and oracle gains
+    arms = [("anomaly_persistence", "Anomaly persistence"), ("M0 memory", "M0 memory"),
+            ("C snapshot control", "C one-day rainfall"), ("M1 + past forcing", "M1 + past weather"),
+            ("M2 + ENSO/IOD", "M2 + ENSO/IOD"), ("M3 + oracle rain", "M3 + future rain$^\\ast$")]
+    rows = [[name] + [f3(boot[(h, k)]["estimate"]) for h in (1, 2, 4)] for k, name in arms]
+    for a, b, name in (("M0 memory", "M2 + ENSO/IOD", "M2 vs M0 (\\%)"), ("M2 + ENSO/IOD", "M3 + oracle rain", "M3 vs M2 (\\%)")):
+        rows.append([name] + [f"{dm.loc[(h, a, b)]['mse_reduction'] * 100:.1f} ({int(dm.loc[(h, a, b)]['campaigns_b_better'])}/{int(dm.loc[(h, a, b)]['campaigns'])})"
+                              for h in (1, 2, 4)])
+    n = pd.read_csv(SKILL_REPORTS_DIR / "metrics.csv").groupby("h")["n"].first()
+    ieee_table("skill.tex", "Skill against persistence of the nested XGBoost arms, 2019--2025", "tab:skill",
+               ["Model", "3 mo", "6 mo", "12 mo"], rows, "lrrr",
+               f"Rows: {n[1]:,} / {n[2]:,} / {n[4]:,} forecasts. Bottom rows: MSE reduction (campaigns better). "
+               "$^\\ast$Uses rain that falls after the forecast; an upper bound, not a forecast.")
+
+    # II. Every model on the same rows (model showcase)
+    sc = pd.concat([pd.read_csv(SKILL_REPORTS_DIR.parent / "showcase" / f) for f in ("scores.csv", "robustness.csv")])
+    names = [("anomaly", "Anomaly persistence"), ("chronos", "Chronos-2 (zero-shot)"), ("m0", "XGBoost M0"),
+             ("rf", "Random Forest M2"), ("m2", "XGBoost M2"), ("cfsv2", "M2 + CFSv2 forecast"),
+             ("lstm", "LSTM + rainfall"), ("combo", "Combination$^\\dagger$"), ("m3", "M3 + future rain$^\\ast$")]
+    rows = []
+    for k, name in names:
+        cells = []
+        for setting in ("main", "blocks"):
+            for h in (1, 2, 4):
+                r = sc[(sc["model"] == k) & (sc["h"] == h) & (sc["setting"] == setting)]
+                cells.append(f3(r["skill"].iloc[0]) if len(r) else "--")
+        rows.append([name] + cells)
+    nm = sc[(sc["setting"] == "main") & (sc["model"] == "m2")].set_index("h")["rows"]
+    ieee_table("models.tex", "Skill of every model on identical rows: test years (left) and unseen 2$^\\circ$ regions (right)",
+               "tab:models", ["Model", "3", "6", "12", "3", "6", "12"], rows, "lrrrrrr",
+               f"Horizons in months. Rows: {nm[1]:,} / {nm[2]:,} / {nm[4]:,} (both settings). "
+               "$^\\dagger$Equal-weight mean chosen on 2016--2018: M2 + RF + LSTM (3, 6 mo), M2 + RF + Chronos-2 (12 mo). "
+               "$^\\ast$Not a forecast. Baselines and Chronos-2 are not trained, so they do not change; -- not refitted there.")
+
+    # III. Interval calibration
+    cov = pd.read_csv(CALIBRATION_REPORTS_DIR / "coverage.csv")
+    methods = [("Gaussian", "Gaussian"), ("Split conformal", "Split conformal"), ("Mondrian D×R", "Pools D$\\times$R, fixed"),
+               ("CQR", "CQR"), ("Mondrian D×R + recal + ACI", "Pools D$\\times$R, online + ACI")]
+    rows = []
+    for k, name in methods:
+        cells = []
+        for h in (1, 2, 4):
+            g = cov[(cov["method"] == k) & (cov["h"] == h)]
+            overall = g[(g["group_var"] == "All") & (g["nominal"] == 0.8)]["coverage"].iloc[0]
+            worst = (g[g["group_var"].isin(["Depth", "Region"]) & g["nominal"].isin([0.8, 0.9])]
+                     .eval("abs(coverage - nominal)").max())
+            cells += [f"{overall * 100:.1f}", f"{worst * 100:.1f}"]
+        rows.append([name] + cells)
+    ieee_table("calib.tex", "Coverage of 80\\,\\% intervals (\\%) and the worst miss over depth and region classes at 80 and 90\\,\\% (points)",
+               "tab:calib", ["Method", "Cov.", "Worst", "Cov.", "Worst", "Cov.", "Worst"], rows, "lrrrrrr",
+               "Column pairs: 3, 6 and 12 months. D: depth class; R: region.")
+
+    # IV. Warnings under assumed cost-loss ratios
+    scores = pd.DataFrame(json.loads((DECISION_REPORTS_DIR / "scores.json").read_text()))
+    scores = scores[(scores["arm"] == "M2 + ENSO/IOD") & (scores["probability"] == "rolling isotonic")]
+    vs = pd.read_csv(AUDIT_REPORTS_DIR / "value_sensitivity.csv").set_index(["event", "h"])
+    ev = {"E1": "Deeper than usual", "E2": "SGI $<-1$", "E3": "Below 8\\,m"}
+    rows = []
+    for e, name in ev.items():
+        for h in (1, 2, 4):
+            sc_ = scores[(scores["event_id"] == e) & (scores["h"] == h)].iloc[0]
+            v = vs.loc[(e, h)]
+            rows.append([name if h == 1 else "", f"{3 * h}", f"{sc_['bss']:.2f}", f"{sc_['roc_auc']:.2f}",
+                         v["V@0.1"].split(" ")[0].replace("-", "$-$"), v["V@0.3"].split(" ")[0].replace("-", "$-$"),
+                         v["alpha_range_ci_above_zero"].replace("–", "--")])
+    ieee_table("value.tex", "Warnings from M2 with rolling recalibration: Brier skill, ROC AUC and relative value $V$ at assumed cost--loss ratios",
+               "tab:value", ["Event", "Mo", "BSS", "AUC", "$V_{0.1}$", "$V_{0.3}$", "$V>0$ for $C/L$"], rows, "lrrrrrl",
+               "No costs were measured: $C/L$ is assumed. Last column: ratios whose 95\\,\\% interval of $V$ is above zero.")
+
+
 def run_paper_figures():
     print("=== Phase 6.1: publication figures and tables ===")
     for fn in (fig1_study_area, fig2_forcing_checks, fig3_skill, fig4_strata, fig5_coverage, fig6_drift, fig7_reliability, fig8_value,
@@ -596,6 +688,7 @@ def run_paper_figures():
         fn()
         print(f"  {fn.__name__}")
     tables()
+    ieee_tables()
     N = numbers()
     print(f"Saved 9 figures, 5 tables and {len(N)} number macros to {PAPER}/")
 
