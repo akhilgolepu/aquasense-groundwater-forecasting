@@ -35,7 +35,9 @@ earlier claim about the model combination.
 
 ![The AquaSense dashboard: a well's observed and forecast depth, and the monitoring network coloured by warning](docs/dashboard.png)
 
-The dashboard is a static React site (`frontend/`) that reads the exported results in `frontend/public/data/`. To
+The dashboard is a static React site (`frontend/`) that reads the exported results in `frontend/public/data/`. Its
+Models section puts all thirteen models on the same test: a leaderboard with intervals, a card per model, a
+head-to-head view of any two models, skill by depth and region, and a replay of each model's forecasts at one well. To
 run it locally, use `cd frontend && npm ci && npm run dev`. To publish it, see
 [docs/deploy-dashboard.md](docs/deploy-dashboard.md) (GitHub Pages or Vercel).
 
@@ -59,7 +61,7 @@ NCEP CFSv2 forecasts (IRI)              ──► seasonal-forecast features (is
 | Path | Content |
 |---|---|
 | `src/research/` | The pipeline: ingestion, forcing, models, calibration, decision value, leakage audit, dashboard export, paper figures |
-| `tests/research/` | 72 tests, including leakage guards on synthetic data and an end-to-end look-ahead test on the real data |
+| `tests/research/` | 79 tests, including leakage guards on synthetic data and an end-to-end look-ahead test on the real data |
 | `reports/` | Every result table and figure (CSV / JSON / PNG); `reports/audit/` holds the leakage audit |
 | `paper/` | Manuscript (`main.tex`), generated figures, tables and `numbers.tex` |
 | `frontend/` | Static dashboard (React, Vite, Tailwind, Recharts) |
