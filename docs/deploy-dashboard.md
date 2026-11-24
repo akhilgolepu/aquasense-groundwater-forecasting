@@ -8,10 +8,10 @@ The dashboard in `frontend/` is a static site: the build reads only the JSON fil
 ```bash
 cd frontend
 npm ci
-DASHBOARD_BASE=/Ground-Water/ npm run build      # the path the site will be served from
-mkdir -p /tmp/site && rm -rf /tmp/site/Ground-Water && cp -r dist /tmp/site/Ground-Water
+DASHBOARD_BASE=/aquasense-groundwater-forecasting/ npm run build      # the path the site will be served from
+mkdir -p /tmp/site && rm -rf /tmp/site/aquasense-groundwater-forecasting && cp -r dist /tmp/site/aquasense-groundwater-forecasting
 python3 -m http.server 8765 --directory /tmp/site
-# open http://localhost:8765/Ground-Water/
+# open http://localhost:8765/aquasense-groundwater-forecasting/
 ```
 
 `DASHBOARD_BASE` sets the base path for the asset URLs, the router and the data requests. Use `/` (the
@@ -28,7 +28,7 @@ The workflow `.github/workflows/deploy-dashboard.yml` builds `frontend/` with
 1. Push the repository (this includes the workflow file).
 2. On GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 3. **Actions → Deploy dashboard → Run workflow** (branch `main`).
-4. The site appears at `https://<user>.github.io/<repository>/`, here `https://akhilgolepu.github.io/Ground-Water/`.
+4. The site appears at `https://<user>.github.io/<repository>/`, here `https://akhilgolepu.github.io/aquasense-groundwater-forecasting/`.
 
 ## Option B: Vercel
 

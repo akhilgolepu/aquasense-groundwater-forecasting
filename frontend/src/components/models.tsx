@@ -38,7 +38,7 @@ import { HorizonPicker } from "@/components/findings";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const axisTick = { fill: "var(--ink-2)", fontSize: 13 };
-const REPO = "https://github.com/akhilgolepu/Ground-Water/blob/main";
+const REPO = "https://github.com/akhilgolepu/aquasense-groundwater-forecasting/blob/main";
 const REAL: ModelKey[] = ["combo", "lstm", "m2", "rf", "lstm_mem", "m0", "chronos"];
 
 type Metric = "skill" | "mae_skill";

@@ -7,7 +7,7 @@ authors:
     given-names: Akhil
     email: akhilgolepu9@gmail.com
     # affiliation and orcid to be added by the author
-repository-code: "https://github.com/akhilgolepu/Ground-Water"
+repository-code: "https://github.com/akhilgolepu/aquasense-groundwater-forecasting"
 version: "1.0.0-rc1"
 date-released: "2026-10-24"
 keywords:
