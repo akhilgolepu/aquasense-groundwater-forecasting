@@ -1,6 +1,6 @@
-# 01 — Project Audit (2026-10-24)
+# Audit of the original pipeline (2026-10-24)
 
-This audit records what the original AquaSense pipeline (Phases 1–5 in the top-level
+This audit records what the original AquaSense pipeline (as described in the original top-level
 README) actually computes, verified against the committed code and data. It is the reason
 the research pipeline in `src/research/` exists.
 
@@ -40,10 +40,10 @@ was computed on a constant per-well value. Those results must not be used in a p
 ## What replaced it
 
 `src/research/ingest.py` (corrected ingestion) and `src/research/benchmark.py` (time-blocked
-benchmark with naive baselines and conformal uncertainty). See
-[04-methodology-and-pilot-results.md](04-methodology-and-pilot-results.md).
+benchmark with naive baselines and conformal uncertainty). The current results are in
+[RESULTS.md](../RESULTS.md).
 
-The legacy modules and backend endpoints were **retired in Phase 5** (2026-10-24) and moved to
+The legacy modules and backend endpoints were **retired** on 2026-10-24 and moved to
 `legacy/` (`legacy/src/...`, `legacy/backend/`, `legacy/models/`, `legacy/data/feature_matrix.*`,
 `legacy/requirements.txt`, `legacy/notebooks/`). File paths in the table above refer to their
 original locations; prepend `legacy/` to find them. The dashboard is fully static and reads only

@@ -36,24 +36,6 @@ data/processed/extension_predictions.parquet
 data/processed/extension_robustness_h*.parquet
 
 # LaTeX build files
-paper/*.aux
-paper/*.bbl
-paper/*.blg
-paper/*.fdb_latexmk
-paper/*.fls
-paper/*.log
-paper/*.out
-
-# Copernicus class files and build output (downloaded by paper/make_hess.py)
-paper/hess/copernicus.*
-paper/hess/pdfscreen*.sty
-paper/hess/*.aux
-paper/hess/*.bbl
-paper/hess/*.blg
-paper/hess/*.fdb_latexmk
-paper/hess/*.fls
-paper/hess/*.log
-paper/hess/*.out
 
 # Report build files
 report/*.aux
@@ -82,11 +64,14 @@ data/processed/audit_cal_predictions.parquet
 data/processed/sequence_cal_predictions.parquet
 data/processed/showcase_predictions.parquet
 data/processed/showcase_rf_robustness_h*.parquet
-paper/ieee/*.aux
-paper/ieee/*.bbl
-paper/ieee/*.blg
-paper/ieee/*.fdb_latexmk
-paper/ieee/*.fls
-paper/ieee/*.log
-paper/ieee/*.out
-paper/ieee/build.log
+
+# Manuscripts (journal, IEEE and submission versions) are kept out of the public repository
+/paper/
+
+# Working notes stay local; only the docs that the README, licences and code link to are published
+/docs/*
+!/docs/dashboard.png
+!/docs/data-card.md
+!/docs/deploy-dashboard.md
+!/docs/forcing-data.md
+!/docs/legacy-audit.md

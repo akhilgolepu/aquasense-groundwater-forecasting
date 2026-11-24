@@ -55,18 +55,17 @@ NCEP CFSv2 forecasts (IRI)              ──► seasonal-forecast features (is
                                               │
    conformal intervals by depth × region, updated online ──► warning probabilities, recalibrated on recent outcomes
                                               │
-   reports/ (every table and figure) ──► paper/ (manuscript) and frontend/public/data/ (dashboard)
+   reports/ (every table and figure) ──► frontend/public/data/ (dashboard)
 ```
 
 | Path | Content |
 |---|---|
-| `src/research/` | The pipeline: ingestion, forcing, models, calibration, decision value, leakage audit, dashboard export, paper figures |
+| `src/research/` | The pipeline: ingestion, forcing, models, calibration, decision value, leakage audit, dashboard export |
 | `tests/research/` | 79 tests, including leakage guards on synthetic data and an end-to-end look-ahead test on the real data |
 | `reports/` | Every result table and figure (CSV / JSON / PNG); `reports/audit/` holds the leakage audit |
-| `paper/` | Manuscript (`main.tex`), generated figures, tables and `numbers.tex` |
 | `frontend/` | Static dashboard (React, Vite, Tailwind, Recharts) |
-| `docs/` | Process journal, data card, one document per part of the work ([index](docs/README.md)) |
-| `legacy/` | The original pipeline, kept for the record ([why it was retired](docs/01-project-audit.md)) |
+| `docs/` | [Data card](docs/data-card.md), [forcing data](docs/forcing-data.md), [dashboard deployment](docs/deploy-dashboard.md) |
+| `legacy/` | The original pipeline, kept for the record ([why it was retired](docs/legacy-audit.md)) |
 
 ## Reproduce
 
@@ -91,8 +90,7 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/research
 
 ## Limitations
 
-- **Team project.** This is a three-person B.Tech project. The process journal records the work, but it does not
-  say who did each part (see the next section).
+- **Team project.** This is a three-person B.Tech project; who did each part goes in the next section.
 - **Data licence.** The groundwater levels come from a public Kaggle compilation of CGWB data. The compiler and
   download query are not recorded, and its redistribution terms have not been confirmed. The original CGWB /
   India-WRIS data are under the Government Open Data Licence – India. The raw file is in `data/raw/`; check its
@@ -116,12 +114,12 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/research
 
 ## Citation and licence
 
-See [CITATION.cff](CITATION.cff). Code is under the [MIT licence](LICENSE). Results, figures, the manuscript and
-docs are under CC BY 4.0. Third-party data in `data/raw/` keep their own terms ([LICENSES.md](LICENSES.md)).
+See [CITATION.cff](CITATION.cff). Code is under the [MIT licence](LICENSE). Results, figures and docs are under
+CC BY 4.0. Third-party data in `data/raw/` keep their own terms ([LICENSES.md](LICENSES.md)).
 
 ## How this project got here
 
 The first version of this repository reported R² = 0.9998 from a Temporal Fusion Transformer with a pumping
 optimiser. An audit found that it had been trained on each borehole's constant construction depth instead of
-its water level, so those results were withdrawn. The audit, the literature survey, the choice of research gaps
-and every step since are recorded in [docs/00-process-journal.md](docs/00-process-journal.md).
+its water level, so those results were withdrawn. The audit is in [docs/legacy-audit.md](docs/legacy-audit.md), and
+the checks behind the current results are in [LEAKAGE_AUDIT.md](LEAKAGE_AUDIT.md).

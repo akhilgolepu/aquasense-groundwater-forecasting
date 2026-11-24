@@ -561,7 +561,7 @@ export function DecisionPanel({ data, stations, warning, onChange }: DecisionPan
           <p className="text-[0.875rem] text-ink-2">
             Acting pays off when the chance of the event is at least this share, so this is also the
             warning trigger. Use about 30% for seasonal planning and 20% for pump decisions six
-            months ahead (docs/10).
+            months ahead.
           </p>
         </div>
         {row && (

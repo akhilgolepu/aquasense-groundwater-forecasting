@@ -4,7 +4,7 @@ Downloads IMD gridded daily rainfall (0.25°) and Tmax/Tmin (1°) via `imdlib`, 
 monthly Niño 3.4 and Dipole Mode Index (IOD) series from NOAA PSL.
 
 Raw downloads live in data/external/ (git-ignored). Re-running skips years already on disk.
-Sources and licences are documented in docs/07-forcing-data.md.
+Sources and licences are documented in docs/forcing-data.md.
 """
 
 import json

@@ -165,7 +165,7 @@ def panel_dm(df: pd.DataFrame, a: str, b: str, loss: str = "squared") -> dict:
     """
     Diebold–Mariano on the campaign-averaged loss differential (a − b), Newey–West variance.
     loss="squared" (MSE) or "absolute" (MAE). Absolute loss is the primary test: squared-error
-    differentials are dominated by a handful of datum-jump readings (docs/08 §3).
+    differentials are dominated by a handful of datum-jump readings.
     """
     err_a, err_b = df[a] - df["y_target"], df[b] - df["y_target"]
     diff = err_a ** 2 - err_b ** 2 if loss == "squared" else err_a.abs() - err_b.abs()

@@ -4,7 +4,7 @@
 - **File:** `data/raw/Groundwater India Data.csv` (35 MB, 416 952 rows, 6 440 stations).
 - **Origin:** a public Kaggle compilation of Central Ground Water Board (CGWB) levels as published
   through India-WRIS. The compiler, compilation date and exact download query are **not recorded**.
-  Record them before submission, or rebuild from India-WRIS directly (Phase 5.4).
+  Record them before submission, or rebuild from India-WRIS directly.
 - **Licence:** CGWB/India-WRIS data are released under the Government Open Data Licence – India
   (NDSAP). The Kaggle re-distribution licence must be checked before we re-publish processed data.
 - **Companion file:** `gwq_chemical_parameter_manual_cgwb_ap_1961_2025 (1).csv`, with 10 950 CGWB
@@ -37,7 +37,7 @@
 | Gross errors (−2014 to +2430 m) | Keep −5 ≤ depth ≤ 250 m (516 rows dropped) |
 | Spikes within a station | Robust z-score with MAD > 8 dropped (2 330 rows) |
 | Off-campaign months | Mapped to the nearest campaign; duplicates averaged |
-| Point-in-time weather | Replaced by IMD gridded forcing (Phase 1, [07-forcing-data.md](07-forcing-data.md)); kept only as the `snap_*` control arm |
+| Point-in-time weather | Replaced by IMD gridded forcing ([forcing-data.md](forcing-data.md)); kept only as the `snap_*` control arm |
 
 ## Processed outputs
 

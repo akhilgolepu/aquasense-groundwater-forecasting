@@ -4,7 +4,7 @@ Reads 'Groundwater India Data.csv' using the real water-level column (`target`) 
 real observation dates, harmonises the two sign conventions in the CGWB data, removes
 gross outliers, and builds a per-station seasonal "campaign" series.
 
-Why this module exists (see docs/01-project-audit.md):
+Why this module exists (see docs/legacy-audit.md):
 the legacy Phase 2 pipeline keyword-matched `wellDepth` (static borehole depth) as the
 target and fabricated monthly timestamps, which made every downstream metric invalid.
 

@@ -1,6 +1,5 @@
 /**
- * Research agenda shown on the dashboard. Source of truth: docs/03-research-gaps.md.
- * Keep the two in sync when the plan changes.
+ * Research agenda shown on the dashboard.
  */
 
 export type GapStatus = "Answered in the paper" | "Planned" | "Needs new data";

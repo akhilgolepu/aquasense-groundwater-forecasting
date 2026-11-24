@@ -346,7 +346,7 @@ def run_decision_value():
     print(f"\nSaved reports to {DECISION_REPORTS_DIR}/")
 
 
-WATER_YEARS = {  # targets Aug → May; JJAS departures from docs/07
+WATER_YEARS = {  # targets Aug → May; JJAS departures from docs/forcing-data.md
     "2022–23 (wet, JJAS +9 %)": [2022 * 4 + 2, 2022 * 4 + 3, 2023 * 4 + 0, 2023 * 4 + 1],
     "2023–24 (dry, JJAS −5 %)": [2023 * 4 + 2, 2023 * 4 + 3, 2024 * 4 + 0, 2024 * 4 + 1],
 }
